@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 
 class PreferencesManager {
     static let shared = PreferencesManager()
@@ -21,7 +22,10 @@ class PreferencesManager {
 
     var launchAtLogin: Bool {
         get { defaults.bool(forKey: Keys.launchAtLogin) }
-        set { defaults.set(newValue, forKey: Keys.launchAtLogin) }
+        set {
+            defaults.set(newValue, forKey: Keys.launchAtLogin)
+            updateLaunchAtLogin()
+        }
     }
 
     var lastMode: Int {
@@ -29,5 +33,24 @@ class PreferencesManager {
         set { defaults.set(newValue, forKey: Keys.lastMode) }
     }
 
-    private init() {}
+    private init() {
+        // Apply launch at login on init
+        if launchAtLogin {
+            updateLaunchAtLogin()
+        }
+    }
+
+    private func updateLaunchAtLogin() {
+        if #available(macOS 13.0, *) {
+            do {
+                if launchAtLogin {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("Failed to update launch at login: \(error)")
+            }
+        }
+    }
 }
