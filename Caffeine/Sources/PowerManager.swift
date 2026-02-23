@@ -5,7 +5,7 @@ class PowerManager {
     static let shared = PowerManager()
 
     private var timer: Timer?
-    var onBatteryLevelChanged: ((Int, Bool)) -> Void?
+    var onBatteryLevelChanged: (Int, Bool) -> Void = { _, _ in }
     // (batteryLevel, isCharging)
 
     private init() {}
@@ -37,7 +37,7 @@ class PowerManager {
         let isCharging = (info[kIOPSIsChargingKey as String] as? Bool) ?? false
 
         DispatchQueue.main.async { [weak self] in
-            self?.onBatteryLevelChanged?(currentCapacity, isCharging)
+            self?.onBatteryLevelChanged(currentCapacity, isCharging)
         }
     }
 

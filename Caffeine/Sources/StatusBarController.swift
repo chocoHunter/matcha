@@ -111,7 +111,8 @@ class StatusBarController: NSObject {
 
         PowerManager.shared.startMonitoring()
         PowerManager.shared.onBatteryLevelChanged = { [weak self] level, isCharging in
-            self?.updateBatteryDisplay(level: level, isCharging: isCharging)
+            guard let self = self else { return }
+            self.updateBatteryDisplay(level: level, isCharging: isCharging)
         }
 
         updateBatteryDisplay()
