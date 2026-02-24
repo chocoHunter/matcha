@@ -5,6 +5,7 @@ class StatusBarController: NSObject {
     private var menu: NSMenu!
     private var statusMenuItem: NSMenuItem!
     private var batteryMenuItem: NSMenuItem!
+    private var historyMenuItem: NSMenuItem!
     private var timer: Timer?
 
     private var selectedMode: CaffeineMode = .off
@@ -16,6 +17,7 @@ class StatusBarController: NSObject {
         setupMenu()
         startUpdateTimer()
         setupNotifications()
+        updateHistoryDisplay()
     }
 
     private func setupStatusItem() {
@@ -36,6 +38,11 @@ class StatusBarController: NSObject {
         batteryMenuItem = NSMenuItem(title: "电池: --%", action: nil, keyEquivalent: "")
         batteryMenuItem.isEnabled = false
         menu.addItem(batteryMenuItem)
+
+        // History section
+        historyMenuItem = NSMenuItem(title: "今日累计: 0 分钟", action: nil, keyEquivalent: "")
+        historyMenuItem.isEnabled = false
+        menu.addItem(historyMenuItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -146,10 +153,25 @@ class StatusBarController: NSObject {
             let hours = elapsed / 3600
             let minutes = (elapsed % 3600) / 60
             let seconds = elapsed % 60
-            statusMenuItem.title = "状态: \(manager.currentMode.displayName) (\(String(format: "%02d:%02d:%02d", hours, minutes, seconds)))"
+
+            var timeString = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+
+            // Show remaining time for timed mode
+            if let remainingString = manager.remainingTimeString {
+                timeString += " [剩余: \(remainingString)]"
+            }
+
+            statusMenuItem.title = "状态: \(manager.currentMode.displayName) (\(timeString))"
         } else {
             statusMenuItem.title = "状态: 关闭"
+            // Update history when stopped
+            updateHistoryDisplay()
         }
+    }
+
+    private func updateHistoryDisplay() {
+        let usageString = HistoryManager.shared.getTodayUsageString()
+        historyMenuItem.title = "今日累计: \(usageString)"
     }
 
     private func updateBatteryDisplay(level: Int? = nil, isCharging: Bool? = nil) {

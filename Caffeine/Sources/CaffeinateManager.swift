@@ -40,6 +40,7 @@ class CaffeinateManager {
     private var process: Process?
     private(set) var currentMode: CaffeineMode = .off
     private(set) var startTime: Date?
+    private var timerDuration: Int?  // Total duration in seconds for timed mode
 
     var isRunning: Bool {
         return process != nil
@@ -50,10 +51,32 @@ class CaffeinateManager {
         return Date().timeIntervalSince(start)
     }
 
+    /// Remaining time in seconds for timed mode, nil if not in timed mode
+    var remainingTime: TimeInterval? {
+        guard currentMode == .timed, let duration = timerDuration else { return nil }
+        let remaining = TimeInterval(duration) - elapsedTime
+        return remaining > 0 ? remaining : 0
+    }
+
+    /// Format remaining time as string
+    var remainingTimeString: String? {
+        guard let remaining = remainingTime else { return nil }
+        let minutes = Int(remaining) / 60
+        let seconds = Int(remaining) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
     func start(mode: CaffeineMode, timerSeconds: Int? = nil) {
+        // Record today's usage before starting new session
+        if isRunning {
+            HistoryManager.shared.addUsage(seconds: Int(elapsedTime))
+        }
+
         stop()
 
         guard mode != .off else { return }
+
+        timerDuration = mode == .timed ? timerSeconds : nil
 
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
@@ -71,10 +94,16 @@ class CaffeinateManager {
     }
 
     func stop() {
+        // Record usage when stopping
+        if let start = startTime {
+            HistoryManager.shared.addUsage(seconds: Int(Date().timeIntervalSince(start)))
+        }
+
         process?.terminate()
         process = nil
         currentMode = .off
         startTime = nil
+        timerDuration = nil
         NotificationCenter.default.post(name: .caffeineStateChanged, object: nil)
     }
 }
