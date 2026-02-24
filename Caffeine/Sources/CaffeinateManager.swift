@@ -67,11 +67,7 @@ class CaffeinateManager {
     }
 
     func start(mode: CaffeineMode, timerSeconds: Int? = nil) {
-        // Record today's usage before starting new session
-        if isRunning {
-            HistoryManager.shared.addUsage(seconds: Int(elapsedTime))
-        }
-
+        // Stop any existing session (will record usage in stop())
         stop()
 
         guard mode != .off else { return }

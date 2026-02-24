@@ -22,9 +22,7 @@ class StatusBarController: NSObject {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        if let button = statusItem.button {
-            updateIcon(for: .off)
-        }
+        updateIcon(for: .off)
     }
 
     private func setupMenu() {
