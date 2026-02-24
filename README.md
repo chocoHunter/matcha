@@ -4,10 +4,12 @@ A macOS menu bar app that prevents your Mac from sleeping.
 
 ## Features
 
-- **Multiple sleep prevention modes**: Awake, Screen On, Extreme, Timed
-- **Battery-aware auto-recovery**: Automatically stop when battery is low
+- **Multiple sleep prevention modes**: Prevent Sleep, Screen On, Lid Closed, Timed
+- **Battery-aware auto-recovery**: Automatically stop when battery is low (customizable)
+- **Manual control**: Stop/Resume caffeinate with one click
+- **Flexible timers**: 15 min to 24 hours, or permanent
+- **Custom settings**: Manual input for timer and battery threshold
 - **Launch at login**: Auto-start when you log in
-- **Coffee-themed UI**: Intuitive menu bar interface
 
 ## How to Build
 
@@ -36,12 +38,13 @@ xcrun --sdk macosx swiftc -o Caffeine main.swift AppDelegate.swift StatusBarCont
 
 1. Click the coffee cup icon in the menu bar
 2. Select a mode to prevent sleep:
-   - **清醒模式 (Awake)**: Prevents system sleep
-   - **屏幕常亮 (Screen On)**: Keeps display on
-   - **极致模式 (Extreme)**: Prevents sleep even with lid closed (requires external display)
-   - **定时模式 (Timed)**: Set a duration
-3. Configure auto-recovery threshold in settings
-4. Enable "开机自动启动" (Launch at Login) if desired
+   - **Prevent Sleep**: Prevents system sleep
+   - **Screen On**: Keeps display on
+   - **Lid Closed**: Prevents sleep even with lid closed (requires external display)
+   - **Timed**: Set a duration (15 min to 24 hours, or permanent)
+3. Click "Resume" to stop at any time
+4. Custom timer and battery threshold input supported
+5. Enable "Launch at Login" if desired
 
 ## License
 
