@@ -10,9 +10,9 @@ enum CaffeineMode: Int, CaseIterable {
     var displayName: String {
         switch self {
         case .off: return "关闭"
-        case .awake: return "清醒模式"
+        case .awake: return "阻止睡眠"
         case .screenOn: return "屏幕常亮"
-        case .extreme: return "极致模式"
+        case .extreme: return "合盖不睡"
         case .timed: return "定时模式"
         }
     }

@@ -6,10 +6,13 @@ class StatusBarController: NSObject {
     private var statusMenuItem: NSMenuItem!
     private var batteryMenuItem: NSMenuItem!
     private var historyMenuItem: NSMenuItem!
+    private var stopMenuItem: NSMenuItem!
+    private var timerMenuItem: NSMenuItem!
+    private var thresholdMenuItem: NSMenuItem!
     private var timer: Timer?
 
     private var selectedMode: CaffeineMode = .off
-    private var selectedTimerMinutes: Int = 15
+    private var selectedTimerMinutes: Int = 0 // 0 means permanent
 
     override init() {
         super.init()
@@ -45,7 +48,7 @@ class StatusBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         // Mode selection
-        let awakeItem = NSMenuItem(title: "清醒模式", action: #selector(selectAwake), keyEquivalent: "")
+        let awakeItem = NSMenuItem(title: "阻止睡眠", action: #selector(selectAwake), keyEquivalent: "")
         awakeItem.target = self
         menu.addItem(awakeItem)
 
@@ -53,39 +56,65 @@ class StatusBarController: NSObject {
         screenOnItem.target = self
         menu.addItem(screenOnItem)
 
-        let extremeItem = NSMenuItem(title: "极致模式", action: #selector(selectExtreme), keyEquivalent: "")
+        let extremeItem = NSMenuItem(title: "合盖不睡", action: #selector(selectExtreme), keyEquivalent: "")
         extremeItem.target = self
         menu.addItem(extremeItem)
 
+        // Stop button - disabled when not running
+        stopMenuItem = NSMenuItem(title: "恢复", action: #selector(stopCaffeinate), keyEquivalent: "")
+        stopMenuItem.target = self
+        stopMenuItem.isEnabled = false
+        menu.addItem(stopMenuItem)
+
         menu.addItem(NSMenuItem.separator())
 
-        // Timer submenu
+        // Settings section - Timer, Battery, Launch at Login
+        // Timer submenu - longer time options with permanent
         let timerMenu = NSMenu()
-        for minutes in [5, 15, 30, 60, 120] {
-            let item = NSMenuItem(title: "\(minutes) 分钟", action: #selector(selectTimer(_:)), keyEquivalent: "")
+        let permanentItem = NSMenuItem(title: "永久", action: #selector(selectTimer(_:)), keyEquivalent: "")
+        permanentItem.target = self
+        permanentItem.tag = 0
+        timerMenu.addItem(permanentItem)
+        for minutes in [15, 30, 60, 120, 180, 240, 360, 480, 720, 1440] {
+            let title = minutes >= 60 ? "\(minutes / 60) 小时" : "\(minutes) 分钟"
+            let item = NSMenuItem(title: title, action: #selector(selectTimer(_:)), keyEquivalent: "")
             item.target = self
             item.tag = minutes
             timerMenu.addItem(item)
         }
-        let timerItem = NSMenuItem(title: "定时: 15 分钟", action: nil, keyEquivalent: "")
-        timerItem.submenu = timerMenu
-        menu.addItem(timerItem)
+        // Custom timer option
+        let customTimerItem = NSMenuItem(title: "自定义...", action: #selector(customTimer), keyEquivalent: "")
+        customTimerItem.target = self
+        timerMenu.addItem(NSMenuItem.separator())
+        timerMenu.addItem(customTimerItem)
 
-        menu.addItem(NSMenuItem.separator())
+        timerMenuItem = NSMenuItem(title: "定时恢复: 永久", action: nil, keyEquivalent: "")
+        timerMenuItem.submenu = timerMenu
+        menu.addItem(timerMenuItem)
 
-        // Settings
+        // Battery threshold - off by default
         let thresholdMenu = NSMenu()
+        let offItem = NSMenuItem(title: "关闭", action: #selector(selectThreshold(_:)), keyEquivalent: "")
+        offItem.target = self
+        offItem.tag = 0
+        thresholdMenu.addItem(offItem)
         for threshold in [10, 20, 30, 50] {
             let item = NSMenuItem(title: "\(threshold)%", action: #selector(selectThreshold(_:)), keyEquivalent: "")
             item.target = self
             item.tag = threshold
             thresholdMenu.addItem(item)
         }
-        let thresholdItem = NSMenuItem(title: "电池低于 20% 自动恢复", action: nil, keyEquivalent: "")
-        thresholdItem.submenu = thresholdMenu
-        menu.addItem(thresholdItem)
+        // Custom threshold option
+        let customThresholdItem = NSMenuItem(title: "自定义...", action: #selector(customThreshold), keyEquivalent: "")
+        customThresholdItem.target = self
+        thresholdMenu.addItem(NSMenuItem.separator())
+        thresholdMenu.addItem(customThresholdItem)
 
-        let launchItem = NSMenuItem(title: "开机自动启动", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        thresholdMenuItem = NSMenuItem(title: "电量控制: 关闭", action: nil, keyEquivalent: "")
+        thresholdMenuItem.submenu = thresholdMenu
+        menu.addItem(thresholdMenuItem)
+
+        let launchItem = NSMenuItem(title: "开机自启", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
         launchItem.target = self
         launchItem.state = PreferencesManager.shared.launchAtLogin ? .on : .off
         menu.addItem(launchItem)
@@ -93,7 +122,7 @@ class StatusBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         // Quit
-        let quitItem = NSMenuItem(title: "退出 Caffeine", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "退出程序", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -126,6 +155,8 @@ class StatusBarController: NSObject {
     @objc private func caffeineStateChanged() {
         updateIcon(for: CaffeinateManager.shared.currentMode)
         updateStatus()
+        // Enable/disable stop button based on running state
+        stopMenuItem.isEnabled = CaffeinateManager.shared.isRunning
     }
 
     private func updateIcon(for mode: CaffeineMode) {
@@ -180,8 +211,9 @@ class StatusBarController: NSObject {
         let icon = charging ? "🔌" : "🔋"
         batteryMenuItem.title = "电池: \(batteryLevel)% \(icon)"
 
-        // Auto-stop check
-        if !charging && batteryLevel <= PreferencesManager.shared.batteryThreshold && CaffeinateManager.shared.isRunning {
+        // Auto-stop check - only when threshold > 0 (enabled)
+        let threshold = PreferencesManager.shared.batteryThreshold
+        if threshold > 0 && !charging && batteryLevel <= threshold && CaffeinateManager.shared.isRunning {
             CaffeinateManager.shared.stop()
         }
     }
@@ -189,18 +221,66 @@ class StatusBarController: NSObject {
     @objc private func selectAwake() { startCaffeinate(mode: .awake) }
     @objc private func selectScreenOn() { startCaffeinate(mode: .screenOn) }
     @objc private func selectExtreme() { startCaffeinate(mode: .extreme) }
+    @objc private func stopCaffeinate() { CaffeinateManager.shared.stop() }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
         selectedTimerMinutes = sender.tag
-        if let timerItem = menu.item(withTitle: "定时: 15 分钟") {
-            timerItem.title = "定时: \(sender.tag) 分钟"
+        if sender.tag == 0 {
+            timerMenuItem.title = "定时恢复: 永久"
+        } else {
+            timerMenuItem.title = "定时恢复: \(sender.title)"
+        }
+        startCaffeinate(mode: .timed)
+    }
+
+    @objc private func customTimer() {
+        let alert = NSAlert()
+        alert.messageText = "自定义定时"
+        alert.informativeText = "请输入分钟数（如 90 表示 1.5 小时）"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        input.placeholderString = "分钟数"
+        alert.accessoryView = input
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            if let minutes = Int(input.stringValue), minutes > 0 {
+                selectedTimerMinutes = minutes
+                let title = minutes >= 60 ? "\(minutes / 60) 小时 \(minutes % 60) 分钟" : "\(minutes) 分钟"
+                timerMenuItem.title = "定时恢复: \(title)"
+                startCaffeinate(mode: .timed)
+            }
         }
     }
 
     @objc private func selectThreshold(_ sender: NSMenuItem) {
         PreferencesManager.shared.batteryThreshold = sender.tag
-        if let thresholdItem = menu.items.first(where: { $0.title.hasPrefix("电池低于") }) {
-            thresholdItem.title = "电池低于 \(sender.tag)% 自动恢复"
+        if sender.tag == 0 {
+            thresholdMenuItem.title = "电量控制: 关闭"
+        } else {
+            thresholdMenuItem.title = "电量控制: \(sender.tag)%"
+        }
+    }
+
+    @objc private func customThreshold() {
+        let alert = NSAlert()
+        alert.messageText = "自定义电量阈值"
+        alert.informativeText = "请输入电量百分比（1-100）"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        input.placeholderString = "百分比"
+        alert.accessoryView = input
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            if let threshold = Int(input.stringValue), threshold > 0 && threshold <= 100 {
+                PreferencesManager.shared.batteryThreshold = threshold
+                thresholdMenuItem.title = "电量控制: \(threshold)%"
+            }
         }
     }
 
@@ -216,7 +296,10 @@ class StatusBarController: NSObject {
     }
 
     private func startCaffeinate(mode: CaffeineMode) {
-        if mode == .timed {
+        // If timer is 0 (permanent), use awake mode instead
+        if mode == .timed && selectedTimerMinutes == 0 {
+            CaffeinateManager.shared.start(mode: .awake)
+        } else if mode == .timed {
             CaffeinateManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
         } else {
             CaffeinateManager.shared.start(mode: mode)

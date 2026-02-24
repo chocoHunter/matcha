@@ -14,8 +14,7 @@ class PreferencesManager {
 
     var batteryThreshold: Int {
         get {
-            let value = defaults.integer(forKey: Keys.batteryThreshold)
-            return value == 0 ? 20 : value
+            return defaults.integer(forKey: Keys.batteryThreshold)
         }
         set { defaults.set(newValue, forKey: Keys.batteryThreshold) }
     }
