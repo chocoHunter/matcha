@@ -222,7 +222,7 @@ class MatchaManager {
             process = task
             currentMode = mode
             startTime = Date()
-            NotificationCenter.default.post(name: .caffeineStateChanged, object: nil)
+            NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
         } catch {
             print("Failed to start caffeinate: \(error)")
         }
@@ -233,12 +233,12 @@ class MatchaManager {
         process = nil
         currentMode = .off
         startTime = nil
-        NotificationCenter.default.post(name: .caffeineStateChanged, object: nil)
+        NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
     }
 }
 
 extension Notification.Name {
-    static let caffeineStateChanged = Notification.Name("caffeineStateChanged")
+    static let matchaStateChanged = Notification.Name("matchaStateChanged")
 }
 ```
 
@@ -495,8 +495,8 @@ class StatusBarController: NSObject {
     private func setupNotifications() {
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(caffeineStateChanged),
-            name: .caffeineStateChanged,
+            selector: #selector(matchaStateChanged),
+            name: .matchaStateChanged,
             object: nil
         )
 
@@ -508,7 +508,7 @@ class StatusBarController: NSObject {
         updateBatteryDisplay()
     }
 
-    @objc private func caffeineStateChanged() {
+    @objc private func matchaStateChanged() {
         updateIcon(for: MatchaManager.shared.currentMode)
         updateStatus()
     }
@@ -709,7 +709,7 @@ git commit -m "feat: add app icon and release config"
 
 ## Plan Complete
 
-**Plan saved to:** `docs/plans/2026-02-24-caffeine-implementation.md`
+**Plan saved to:** `docs/plans/2026-02-24-matcha-implementation.md`
 
 Two execution options:
 

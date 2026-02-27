@@ -268,7 +268,7 @@ git commit -m "feat: add history tracking for today's usage"
 
 ## 计划完成
 
-**计划保存位置：** `docs/plans/2026-02-24-caffeine-implementation.md`
+**计划保存位置：** `docs/plans/2026-02-24-matcha-implementation.md`
 
 ---
 
