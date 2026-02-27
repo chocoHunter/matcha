@@ -1,4 +1,4 @@
-# Caffeine
+# Matcha
 
 一款 macOS 菜单栏应用，让你的 Mac 保持清醒。
 
@@ -25,27 +25,27 @@
 xcodegen generate
 ```
 
-这会从 `project.yml` 生成 `Caffeine.xcodeproj`。
+这会从 `project.yml` 生成 `Matcha.xcodeproj`。
 
 ### 构建命令
 
 **构建 App：**
 ```bash
-xcodebuild -project Caffeine.xcodeproj -scheme Caffeine -configuration Release build
+xcodebuild -project Matcha.xcodeproj -scheme Matcha -configuration Release build
 ```
 
 **创建 DMG：**
 ```bash
-create-dmg Caffeine.dmg ~/Library/Developer/Xcode/DerivedData/Caffeine-*/Build/Products/Release/Caffeine.app
+create-dmg Matcha.dmg ~/Library/Developer/Xcode/DerivedData/Matcha-*/Build/Products/Release/Matcha.app
 ```
 
-或直接双击打开 `Caffeine.xcodeproj`，在 Xcode 中按 `Cmd + B` 构建。
+或直接双击打开 `Matcha.xcodeproj`，在 Xcode 中按 `Cmd + B` 构建。
 
 ### 或使用命令行（无需 Xcode）
 
 ```bash
 cd Sources
-xcrun --sdk macosx swiftc -o Caffeine main.swift AppDelegate.swift StatusBarController.swift CaffeinateManager.swift PowerManager.swift PreferencesManager.swift HistoryManager.swift
+xcrun --sdk macosx swiftc -o Matcha main.swift AppDelegate.swift StatusBarController.swift MatchaManager.swift PowerManager.swift PreferencesManager.swift HistoryManager.swift
 ```
 
 ## 使用方法
@@ -63,18 +63,18 @@ xcrun --sdk macosx swiftc -o Caffeine main.swift AppDelegate.swift StatusBarCont
 ## 项目结构
 
 ```
-Caffeine/
+Matcha/
 ├── Sources/
 │   ├── main.swift              # 应用入口
 │   ├── AppDelegate.swift       # 应用代理
 │   ├── StatusBarController.swift  # 菜单栏控制器
-│   ├── CaffeinateManager.swift # caffeinate 进程管理
+│   ├── MatchaManager.swift # matcha 进程管理
 │   ├── PowerManager.swift      # 电池状态监控
 │   ├── PreferencesManager.swift # 用户偏好设置
 │   └── HistoryManager.swift    # 使用历史记录
 ├── Resources/                  # 资源文件
 ├── Info.plist                  # 应用配置
-└── Caffeine.entitlements       # 权限配置
+└── Matcha.entitlements       # 权限配置
 ```
 
 ## 技术栈

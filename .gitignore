@@ -4,8 +4,8 @@ build/
 *.xcworkspace/
 *.xcodeproj
 *.xcworkspace
-Caffeine.entitlements
-Sources/Caffeine
+Matcha.entitlements
+Sources/Matcha
 *.app/
 *.dmg
 DerivedData/

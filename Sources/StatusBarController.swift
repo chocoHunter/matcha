@@ -11,7 +11,7 @@ class StatusBarController: NSObject {
     private var thresholdMenuItem: NSMenuItem!
     private var timer: Timer?
 
-    private var selectedMode: CaffeineMode = .off
+    private var selectedMode: MatchaMode = .off
     private var selectedTimerMinutes: Int = 0 // 0 means permanent
 
     override init() {
@@ -138,8 +138,8 @@ class StatusBarController: NSObject {
     private func setupNotifications() {
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(caffeineStateChanged),
-            name: .caffeineStateChanged,
+            selector: #selector(matchaStateChanged),
+            name: .matchaStateChanged,
             object: nil
         )
 
@@ -152,14 +152,14 @@ class StatusBarController: NSObject {
         updateBatteryDisplay()
     }
 
-    @objc private func caffeineStateChanged() {
-        updateIcon(for: CaffeinateManager.shared.currentMode)
+    @objc private func matchaStateChanged() {
+        updateIcon(for: MatchaManager.shared.currentMode)
         updateStatus()
         // Enable/disable stop button based on running state
-        stopMenuItem.isEnabled = CaffeinateManager.shared.isRunning
+        stopMenuItem.isEnabled = MatchaManager.shared.isRunning
     }
 
-    private func updateIcon(for mode: CaffeineMode) {
+    private func updateIcon(for mode: MatchaMode) {
         guard let button = statusItem.button else { return }
 
         let symbolName: String
@@ -172,11 +172,11 @@ class StatusBarController: NSObject {
             symbolName = "timer"
         }
 
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Caffeine")
+        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Matcha")
     }
 
     private func updateStatus() {
-        let manager = CaffeinateManager.shared
+        let manager = MatchaManager.shared
         if manager.isRunning {
             let elapsed = Int(manager.elapsedTime)
             let hours = elapsed / 3600
@@ -213,15 +213,15 @@ class StatusBarController: NSObject {
 
         // Auto-stop check - only when threshold > 0 (enabled)
         let threshold = PreferencesManager.shared.batteryThreshold
-        if threshold > 0 && !charging && batteryLevel <= threshold && CaffeinateManager.shared.isRunning {
-            CaffeinateManager.shared.stop()
+        if threshold > 0 && !charging && batteryLevel <= threshold && MatchaManager.shared.isRunning {
+            MatchaManager.shared.stop()
         }
     }
 
     @objc private func selectAwake() { startCaffeinate(mode: .awake) }
     @objc private func selectScreenOn() { startCaffeinate(mode: .screenOn) }
     @objc private func selectExtreme() { startCaffeinate(mode: .extreme) }
-    @objc private func stopCaffeinate() { CaffeinateManager.shared.stop() }
+    @objc private func stopCaffeinate() { MatchaManager.shared.stop() }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
         selectedTimerMinutes = sender.tag
@@ -291,18 +291,18 @@ class StatusBarController: NSObject {
     }
 
     @objc private func quit() {
-        CaffeinateManager.shared.stop()
+        MatchaManager.shared.stop()
         NSApplication.shared.terminate(nil)
     }
 
-    private func startCaffeinate(mode: CaffeineMode) {
+    private func startCaffeinate(mode: MatchaMode) {
         // If timer is 0 (permanent), use awake mode instead
         if mode == .timed && selectedTimerMinutes == 0 {
-            CaffeinateManager.shared.start(mode: .awake)
+            MatchaManager.shared.start(mode: .awake)
         } else if mode == .timed {
-            CaffeinateManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
+            MatchaManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
         } else {
-            CaffeinateManager.shared.start(mode: mode)
+            MatchaManager.shared.start(mode: mode)
         }
         selectedMode = mode
     }

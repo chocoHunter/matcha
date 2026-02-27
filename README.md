@@ -1,4 +1,4 @@
-# Caffeine
+# Matcha
 
 A macOS menu bar app that prevents your Mac from sleeping.
 
@@ -25,27 +25,27 @@ A macOS menu bar app that prevents your Mac from sleeping.
 xcodegen generate
 ```
 
-This creates `Caffeine.xcodeproj` from `project.yml`.
+This creates `Matcha.xcodeproj` from `project.yml`.
 
 ### Build Commands
 
 **Build App:**
 ```bash
-xcodebuild -project Caffeine.xcodeproj -scheme Caffeine -configuration Release build
+xcodebuild -project Matcha.xcodeproj -scheme Matcha -configuration Release build
 ```
 
 **Create DMG:**
 ```bash
-create-dmg Caffeine.dmg ~/Library/Developer/Xcode/DerivedData/Caffeine-*/Build/Products/Release/Caffeine.app
+create-dmg Matcha.dmg ~/Library/Developer/Xcode/DerivedData/Matcha-*/Build/Products/Release/Matcha.app
 ```
 
-Or open `Caffeine.xcodeproj` in Xcode and build via Product → Build.
+Or open `Matcha.xcodeproj` in Xcode and build via Product → Build.
 
 ### Alternative: Command Line Only (no Xcode)
 
 ```bash
 cd Sources
-xcrun --sdk macosx swiftc -o Caffeine main.swift AppDelegate.swift StatusBarController.swift CaffeinateManager.swift PowerManager.swift PreferencesManager.swift
+xcrun --sdk macosx swiftc -o Matcha main.swift AppDelegate.swift StatusBarController.swift MatchaManager.swift PowerManager.swift PreferencesManager.swift
 ```
 
 ## Usage

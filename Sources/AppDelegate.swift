@@ -8,6 +8,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        CaffeinateManager.shared.stop()
+        MatchaManager.shared.stop()
     }
 }

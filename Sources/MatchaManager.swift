@@ -1,11 +1,11 @@
 import Foundation
 
-enum CaffeineMode: Int, CaseIterable {
+enum MatchaMode: Int, CaseIterable {
     case off = 0
-    case awake        // caffeinate -i
-    case screenOn     // caffeinate -d
-    case extreme      // caffeinate -i -s
-    case timed        // caffeinate -i -t <seconds>
+    case awake        // matcha -i
+    case screenOn     // matcha -d
+    case extreme      // matcha -i -s
+    case timed        // matcha -i -t <seconds>
 
     var displayName: String {
         switch self {
@@ -34,11 +34,11 @@ enum CaffeineMode: Int, CaseIterable {
     }
 }
 
-class CaffeinateManager {
-    static let shared = CaffeinateManager()
+class MatchaManager {
+    static let shared = MatchaManager()
 
     private var process: Process?
-    private(set) var currentMode: CaffeineMode = .off
+    private(set) var currentMode: MatchaMode = .off
     private(set) var startTime: Date?
     private var timerDuration: Int?  // Total duration in seconds for timed mode
 
@@ -66,7 +66,7 @@ class CaffeinateManager {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
-    func start(mode: CaffeineMode, timerSeconds: Int? = nil) {
+    func start(mode: MatchaMode, timerSeconds: Int? = nil) {
         // Stop any existing session (will record usage in stop())
         stop()
 
@@ -83,9 +83,9 @@ class CaffeinateManager {
             process = task
             currentMode = mode
             startTime = Date()
-            NotificationCenter.default.post(name: .caffeineStateChanged, object: nil)
+            NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
         } catch {
-            print("Failed to start caffeinate: \(error)")
+            print("Failed to start matcha: \(error)")
         }
     }
 
@@ -100,10 +100,10 @@ class CaffeinateManager {
         currentMode = .off
         startTime = nil
         timerDuration = nil
-        NotificationCenter.default.post(name: .caffeineStateChanged, object: nil)
+        NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
     }
 }
 
 extension Notification.Name {
-    static let caffeineStateChanged = Notification.Name("caffeineStateChanged")
+    static let matchaStateChanged = Notification.Name("matchaStateChanged")
 }
