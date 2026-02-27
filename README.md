@@ -16,18 +16,32 @@ A macOS menu bar app that prevents your Mac from sleeping.
 ### Prerequisites
 - macOS 13.0+ (for SMAppService)
 - Xcode 15.0+
+- XcodeGen (install via `brew install xcodegen`)
+- create-dmg (install via `brew install create-dmg`)
 
-### Build Steps
+### Generate Xcode Project
 
-1. Open Xcode
-2. Create a new project: `File → New → Project...`
-3. Select "App" under "macOS"
-4. Name it "Caffeine" and set the bundle identifier
-5. Copy all Swift files from `Sources/` to your project's source folder
-6. Set `LSUIElement` to `true` in Info.plist (to hide from Dock)
-7. Build: `Product → Build`
+```bash
+xcodegen generate
+```
 
-### Or use command line:
+This creates `Caffeine.xcodeproj` from `project.yml`.
+
+### Build Commands
+
+**Build App:**
+```bash
+xcodebuild -project Caffeine.xcodeproj -scheme Caffeine -configuration Release build
+```
+
+**Create DMG:**
+```bash
+create-dmg Caffeine.dmg ~/Library/Developer/Xcode/DerivedData/Caffeine-*/Build/Products/Release/Caffeine.app
+```
+
+Or open `Caffeine.xcodeproj` in Xcode and build via Product → Build.
+
+### Alternative: Command Line Only (no Xcode)
 
 ```bash
 cd Sources

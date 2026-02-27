@@ -16,18 +16,32 @@
 ### 环境要求
 - macOS 13.0+（用于 SMAppService）
 - Xcode 15.0+
+- XcodeGen（安装：`brew install xcodegen`）
+- create-dmg（安装：`brew install create-dmg`）
 
-### 构建步骤
+### 生成 Xcode 项目
 
-1. 打开 Xcode
-2. 创建新项目：`File → New → Project...`
-3. 选择 "App"（macOS）
-4. 命名为 "Caffeine"，设置 bundle identifier
-5. 将 `Sources/` 中的所有 Swift 文件复制到项目源文件夹
-6. 在 Info.plist 中设置 `LSUIElement` 为 `true`（隐藏 Dock 图标）
-7. 构建：`Product → Build`
+```bash
+xcodegen generate
+```
 
-### 或使用命令行
+这会从 `project.yml` 生成 `Caffeine.xcodeproj`。
+
+### 构建命令
+
+**构建 App：**
+```bash
+xcodebuild -project Caffeine.xcodeproj -scheme Caffeine -configuration Release build
+```
+
+**创建 DMG：**
+```bash
+create-dmg Caffeine.dmg ~/Library/Developer/Xcode/DerivedData/Caffeine-*/Build/Products/Release/Caffeine.app
+```
+
+或直接双击打开 `Caffeine.xcodeproj`，在 Xcode 中按 `Cmd + B` 构建。
+
+### 或使用命令行（无需 Xcode）
 
 ```bash
 cd Sources

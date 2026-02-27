@@ -2,5 +2,11 @@
 build/
 *.xcodeproj/
 *.xcworkspace/
+*.xcodeproj
+*.xcworkspace
 Caffeine.entitlements
 Sources/Caffeine
+*.app/
+*.dmg
+DerivedData/
+project.xcworkspace/
