@@ -1,4 +1,4 @@
-# Caffeine Implementation Plan
+# Matcha Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -13,15 +13,15 @@
 ## Task 1: Create Xcode Project Structure
 
 **Files:**
-- Create: `Caffeine/Sources/AppDelegate.swift`
-- Create: `Caffeine/Sources/main.swift`
-- Create: `Caffeine/Sources/Info.plist`
-- Create: `Caffeine/Sources/Caffeine.entitlements`
+- Create: `Matcha/Sources/AppDelegate.swift`
+- Create: `Matcha/Sources/main.swift`
+- Create: `Matcha/Sources/Info.plist`
+- Create: `Matcha/Sources/Matcha.entitlements`
 
 **Step 1: Create directory structure**
 
 ```bash
-mkdir -p Caffeine/Sources Caffeine/Resources
+mkdir -p Matcha/Sources Matcha/Resources
 ```
 
 **Step 2: Create main.swift**
@@ -72,7 +72,7 @@ app.run()
 </plist>
 ```
 
-**Step 4: Create Caffeine.entitlements**
+**Step 4: Create Matcha.entitlements**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -88,7 +88,7 @@ app.run()
 **Step 5: Commit**
 
 ```bash
-git add Caffeine/Sources/main.swift Caffeine/Sources/Info.plist Caffeine/Sources/Caffeine.entitlements
+git add Matcha/Sources/main.swift Matcha/Sources/Info.plist Matcha/Sources/Matcha.entitlements
 git commit -m "feat: create Xcode project structure"
 ```
 
@@ -97,7 +97,7 @@ git commit -m "feat: create Xcode project structure"
 ## Task 2: Create AppDelegate with Menu Bar Setup
 
 **Files:**
-- Modify: `Caffeine/Sources/AppDelegate.swift`
+- Modify: `Matcha/Sources/AppDelegate.swift`
 
 **Step 1: Write basic AppDelegate**
 
@@ -142,7 +142,7 @@ class StatusBarController {
 **Step 3: Commit**
 
 ```bash
-git add Caffeine/Sources/AppDelegate.swift
+git add Matcha/Sources/AppDelegate.swift
 git commit -m "feat: create AppDelegate and StatusBarController skeleton"
 ```
 
@@ -151,14 +151,14 @@ git commit -m "feat: create AppDelegate and StatusBarController skeleton"
 ## Task 3: Implement CaffeinateManager
 
 **Files:**
-- Create: `Caffeine/Sources/CaffeinateManager.swift`
+- Create: `Matcha/Sources/CaffeinateManager.swift`
 
 **Step 1: Write CaffeinateManager**
 
 ```swift
 import Foundation
 
-enum CaffeineMode: Int, CaseIterable {
+enum MatchaMode: Int, CaseIterable {
     case off = 0
     case awake        // caffeinate -i
     case screenOn     // caffeinate -d
@@ -196,7 +196,7 @@ class CaffeinateManager {
     static let shared = CaffeinateManager()
 
     private var process: Process?
-    private(set) var currentMode: CaffeineMode = .off
+    private(set) var currentMode: MatchaMode = .off
     private(set) var startTime: Date?
 
     var isRunning: Bool {
@@ -208,7 +208,7 @@ class CaffeinateManager {
         return Date().timeIntervalSince(start)
     }
 
-    func start(mode: CaffeineMode, timerSeconds: Int? = nil) {
+    func start(mode: MatchaMode, timerSeconds: Int? = nil) {
         stop()
 
         guard mode != .off else { return }
@@ -245,7 +245,7 @@ extension Notification.Name {
 **Step 2: Commit**
 
 ```bash
-git add Caffeine/Sources/CaffeinateManager.swift
+git add Matcha/Sources/CaffeinateManager.swift
 git commit -m "feat: implement CaffeinateManager for process control"
 ```
 
@@ -254,7 +254,7 @@ git commit -m "feat: implement CaffeinateManager for process control"
 ## Task 4: Implement PowerManager for Battery Monitoring
 
 **Files:**
-- Create: `Caffeine/Sources/PowerManager.swift`
+- Create: `Matcha/Sources/PowerManager.swift`
 
 **Step 1: Write PowerManager**
 
@@ -320,7 +320,7 @@ class PowerManager {
 **Step 2: Commit**
 
 ```bash
-git add Caffeine/Sources/PowerManager.swift
+git add Matcha/Sources/PowerManager.swift
 git commit -m "feat: implement PowerManager for battery monitoring"
 ```
 
@@ -329,7 +329,7 @@ git commit -m "feat: implement PowerManager for battery monitoring"
 ## Task 5: Implement PreferencesManager
 
 **Files:**
-- Create: `Caffeine/Sources/PreferencesManager.swift`
+- Create: `Matcha/Sources/PreferencesManager.swift`
 
 **Step 1: Write PreferencesManager**
 
@@ -375,7 +375,7 @@ private extension Int {
 **Step 2: Commit**
 
 ```bash
-git add Caffeine/Sources/PreferencesManager.swift
+git add Matcha/Sources/PreferencesManager.swift
 git commit -m "feat: implement PreferencesManager with UserDefaults"
 ```
 
@@ -384,7 +384,7 @@ git commit -m "feat: implement PreferencesManager with UserDefaults"
 ## Task 6: Build Full StatusBarController with Menu
 
 **Files:**
-- Modify: `Caffeine/Sources/StatusBarController.swift`
+- Modify: `Matcha/Sources/StatusBarController.swift`
 
 **Step 1: Write complete StatusBarController**
 
@@ -398,7 +398,7 @@ class StatusBarController: NSObject {
     private var batteryMenuItem: NSMenuItem!
     private var timer: Timer?
 
-    private var selectedMode: CaffeineMode = .off
+    private var selectedMode: MatchaMode = .off
     private var selectedTimerMinutes: Int = 15
 
     override init() {
@@ -479,7 +479,7 @@ class StatusBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         // Quit
-        let quitItem = NSMenuItem(title: "退出 Caffeine", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "退出 Matcha", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -513,7 +513,7 @@ class StatusBarController: NSObject {
         updateStatus()
     }
 
-    private func updateIcon(for mode: CaffeineMode) {
+    private func updateIcon(for mode: MatchaMode) {
         guard let button = statusItem.button else { return }
 
         let symbolName: String
@@ -526,7 +526,7 @@ class StatusBarController: NSObject {
             symbolName = "timer"
         }
 
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Caffeine")
+        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Matcha")
     }
 
     private func updateStatus() {
@@ -583,7 +583,7 @@ class StatusBarController: NSObject {
         NSApplication.shared.terminate(nil)
     }
 
-    private func startCaffeinate(mode: CaffeineMode) {
+    private func startCaffeinate(mode: MatchaMode) {
         if mode == .timed {
             CaffeinateManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
         } else {
@@ -602,7 +602,7 @@ class StatusBarController: NSObject {
 **Step 2: Commit**
 
 ```bash
-git add Caffeine/Sources/StatusBarController.swift
+git add Matcha/Sources/StatusBarController.swift
 git commit -m "feat: implement full StatusBarController with menu"
 ```
 
@@ -611,7 +611,7 @@ git commit -m "feat: implement full StatusBarController with menu"
 ## Task 7: Add Launch at Login Support
 
 **Files:**
-- Modify: `Caffeine/Sources/PreferencesManager.swift`
+- Modify: `Matcha/Sources/PreferencesManager.swift`
 
 **Step 1: Add login item helper**
 
@@ -643,7 +643,7 @@ Update the `toggleLaunchAtLogin` method to call `PreferencesManager.shared.updat
 **Step 3: Commit**
 
 ```bash
-git add Caffeine/Sources/StatusBarController.swift Caffeine/Sources/PreferencesManager.swift
+git add Matcha/Sources/StatusBarController.swift Matcha/Sources/PreferencesManager.swift
 git commit -m "feat: add launch at login support"
 ```
 
@@ -654,7 +654,7 @@ git commit -m "feat: add launch at login support"
 **Step 1: Create Xcode project**
 
 ```bash
-cd Caffeine
+cd Matcha
 swift package init --type executable
 # Then configure in Xcode to use AppKit and create .app bundle
 ```
@@ -680,7 +680,7 @@ Or use Xcode GUI to create new project and add Swift files.
 
 ```bash
 git add .
-git commit -m "feat: complete Caffeine app implementation"
+git commit -m "feat: complete Matcha app implementation"
 ```
 
 ---
@@ -688,7 +688,7 @@ git commit -m "feat: complete Caffeine app implementation"
 ## Task 9: Create Release Configuration
 
 **Files:**
-- Create: `Caffeine/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json`
+- Create: `Matcha/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json`
 
 **Step 1: Add app icon**
 
@@ -701,7 +701,7 @@ Update Info.plist with proper bundle settings.
 **Step 3: Commit**
 
 ```bash
-git add Caffeine/Resources/
+git add Matcha/Resources/
 git commit -m "feat: add app icon and release config"
 ```
 

@@ -61,7 +61,7 @@ class StatusBarController: NSObject {
         menu.addItem(extremeItem)
 
         // Stop button - disabled when not running
-        stopMenuItem = NSMenuItem(title: "恢复", action: #selector(stopCaffeinate), keyEquivalent: "")
+        stopMenuItem = NSMenuItem(title: "恢复", action: #selector(stopMatcha), keyEquivalent: "")
         stopMenuItem.target = self
         stopMenuItem.isEnabled = false
         menu.addItem(stopMenuItem)
@@ -218,10 +218,10 @@ class StatusBarController: NSObject {
         }
     }
 
-    @objc private func selectAwake() { startCaffeinate(mode: .awake) }
-    @objc private func selectScreenOn() { startCaffeinate(mode: .screenOn) }
-    @objc private func selectExtreme() { startCaffeinate(mode: .extreme) }
-    @objc private func stopCaffeinate() { MatchaManager.shared.stop() }
+    @objc private func selectAwake() { startMatcha(mode: .awake) }
+    @objc private func selectScreenOn() { startMatcha(mode: .screenOn) }
+    @objc private func selectExtreme() { startMatcha(mode: .extreme) }
+    @objc private func stopMatcha() { MatchaManager.shared.stop() }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
         selectedTimerMinutes = sender.tag
@@ -230,7 +230,7 @@ class StatusBarController: NSObject {
         } else {
             timerMenuItem.title = "定时恢复: \(sender.title)"
         }
-        startCaffeinate(mode: .timed)
+        startMatcha(mode: .timed)
     }
 
     @objc private func customTimer() {
@@ -250,7 +250,7 @@ class StatusBarController: NSObject {
                 selectedTimerMinutes = minutes
                 let title = minutes >= 60 ? "\(minutes / 60) 小时 \(minutes % 60) 分钟" : "\(minutes) 分钟"
                 timerMenuItem.title = "定时恢复: \(title)"
-                startCaffeinate(mode: .timed)
+                startMatcha(mode: .timed)
             }
         }
     }
@@ -295,7 +295,7 @@ class StatusBarController: NSObject {
         NSApplication.shared.terminate(nil)
     }
 
-    private func startCaffeinate(mode: MatchaMode) {
+    private func startMatcha(mode: MatchaMode) {
         // If timer is 0 (permanent), use awake mode instead
         if mode == .timed && selectedTimerMinutes == 0 {
             MatchaManager.shared.start(mode: .awake)

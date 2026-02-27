@@ -1,4 +1,4 @@
-# Caffeine 实现计划
+# Matcha 实现计划
 
 > **目标：** 构建一个 macOS 菜单栏应用，通过多种模式防止 Mac 休眠，具有咖啡因主题 UI 和电池感知自动恢复功能。
 
@@ -11,15 +11,15 @@
 ## 任务 1: 创建 Xcode 项目结构
 
 **文件：**
-- 创建：`Caffeine/Sources/AppDelegate.swift`
-- 创建：`Caffeine/Sources/main.swift`
-- 创建：`Caffeine/Sources/Info.plist`
-- 创建：`Caffeine/Sources/Caffeine.entitlements`
+- 创建：`Matcha/Sources/AppDelegate.swift`
+- 创建：`Matcha/Sources/main.swift`
+- 创建：`Matcha/Sources/Info.plist`
+- 创建：`Matcha/Sources/Matcha.entitlements`
 
 ### 步骤 1: 创建目录结构
 
 ```bash
-mkdir -p Caffeine/Sources Caffeine/Resources
+mkdir -p Matcha/Sources Matcha/Resources
 ```
 
 ### 步骤 2: 创建 main.swift
@@ -44,7 +44,7 @@ app.run()
 ### 步骤 5: 提交
 
 ```bash
-git add Caffeine/Sources/main.swift Caffeine/Sources/Info.plist Caffeine/Sources/Caffeine.entitlements
+git add Matcha/Sources/main.swift Matcha/Sources/Info.plist Matcha/Sources/Matcha.entitlements
 git commit -m "feat: create Xcode project structure"
 ```
 
@@ -53,7 +53,7 @@ git commit -m "feat: create Xcode project structure"
 ## 任务 2: 创建 AppDelegate 和菜单栏基础
 
 **文件：**
-- 修改：`Caffeine/Sources/AppDelegate.swift`
+- 修改：`Matcha/Sources/AppDelegate.swift`
 
 ### 步骤 1: 编写 AppDelegate
 
@@ -84,7 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 ## 任务 3: 实现 CaffeinateManager
 
 **文件：**
-- 创建：`Caffeine/Sources/CaffeinateManager.swift`
+- 创建：`Matcha/Sources/CaffeinateManager.swift`
 
 ### 核心功能
 
@@ -105,7 +105,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 ### 提交
 
 ```bash
-git add Caffeine/Sources/CaffeinateManager.swift
+git add Matcha/Sources/CaffeinateManager.swift
 git commit -m "feat: implement CaffeinateManager for process control"
 ```
 
@@ -114,7 +114,7 @@ git commit -m "feat: implement CaffeinateManager for process control"
 ## 任务 4: 实现 PowerManager 电池监控
 
 **文件：**
-- 创建：`Caffeine/Sources/PowerManager.swift`
+- 创建：`Matcha/Sources/PowerManager.swift`
 
 ### 核心功能
 
@@ -125,7 +125,7 @@ git commit -m "feat: implement CaffeinateManager for process control"
 ### 提交
 
 ```bash
-git add Caffeine/Sources/PowerManager.swift
+git add Matcha/Sources/PowerManager.swift
 git commit -m "feat: implement PowerManager for battery monitoring"
 ```
 
@@ -134,7 +134,7 @@ git commit -m "feat: implement PowerManager for battery monitoring"
 ## 任务 5: 实现 PreferencesManager 偏好设置
 
 **文件：**
-- 创建：`Caffeine/Sources/PreferencesManager.swift`
+- 创建：`Matcha/Sources/PreferencesManager.swift`
 
 ### 存储的设置
 
@@ -145,7 +145,7 @@ git commit -m "feat: implement PowerManager for battery monitoring"
 ### 提交
 
 ```bash
-git add Caffeine/Sources/PreferencesManager.swift
+git add Matcha/Sources/PreferencesManager.swift
 git commit -m "feat: implement PreferencesManager with UserDefaults"
 ```
 
@@ -154,7 +154,7 @@ git commit -m "feat: implement PreferencesManager with UserDefaults"
 ## 任务 6: 构建完整的 StatusBarController
 
 **文件：**
-- 修改：`Caffeine/Sources/StatusBarController.swift`
+- 修改：`Matcha/Sources/StatusBarController.swift`
 
 ### 菜单结构
 
@@ -172,7 +172,7 @@ git commit -m "feat: implement PreferencesManager with UserDefaults"
 电池低于 20% 自动恢复
 开机自动启动
 ─────────────────────
-退出 Caffeine
+退出 Matcha
 ```
 
 ### 核心功能
@@ -188,7 +188,7 @@ git commit -m "feat: implement PreferencesManager with UserDefaults"
 ### 提交
 
 ```bash
-git add Caffeine/Sources/StatusBarController.swift
+git add Matcha/Sources/StatusBarController.swift
 git commit -m "feat: implement full StatusBarController with menu"
 ```
 
@@ -197,7 +197,7 @@ git commit -m "feat: implement full StatusBarController with menu"
 ## 任务 7: 添加开机启动支持
 
 **文件：**
-- 修改：`Caffeine/Sources/PreferencesManager.swift`
+- 修改：`Matcha/Sources/PreferencesManager.swift`
 
 ### 实现
 
@@ -206,7 +206,7 @@ git commit -m "feat: implement full StatusBarController with menu"
 ### 提交
 
 ```bash
-git add Caffeine/Sources/StatusBarController.swift Caffeine/Sources/PreferencesManager.swift
+git add Matcha/Sources/StatusBarController.swift Matcha/Sources/PreferencesManager.swift
 git commit -m "feat: add launch at login support"
 ```
 
@@ -215,7 +215,7 @@ git commit -m "feat: add launch at login support"
 ## 任务 8: 添加使用历史记录
 
 **文件：**
-- 创建：`Caffeine/Sources/HistoryManager.swift`
+- 创建：`Matcha/Sources/HistoryManager.swift`
 
 ### 功能
 
@@ -225,7 +225,7 @@ git commit -m "feat: add launch at login support"
 ### 提交
 
 ```bash
-git add Caffeine/Sources/HistoryManager.swift
+git add Matcha/Sources/HistoryManager.swift
 git commit -m "feat: add history tracking for today's usage"
 ```
 
@@ -252,7 +252,7 @@ git commit -m "feat: add history tracking for today's usage"
 ## 任务 10: 创建发布配置
 
 **文件：**
-- 创建：`Caffeine/Resources/Assets.xcassets/`
+- 创建：`Matcha/Resources/Assets.xcassets/`
 
 ### 步骤 1: 添加应用图标
 
