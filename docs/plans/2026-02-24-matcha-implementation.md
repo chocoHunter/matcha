@@ -112,7 +112,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        CaffeinateManager.shared.stop()
+        MatchaManager.shared.stop()
     }
 }
 ```
@@ -148,12 +148,12 @@ git commit -m "feat: create AppDelegate and StatusBarController skeleton"
 
 ---
 
-## Task 3: Implement CaffeinateManager
+## Task 3: Implement MatchaManager
 
 **Files:**
-- Create: `Matcha/Sources/CaffeinateManager.swift`
+- Create: `Matcha/Sources/MatchaManager.swift`
 
-**Step 1: Write CaffeinateManager**
+**Step 1: Write MatchaManager**
 
 ```swift
 import Foundation
@@ -192,8 +192,8 @@ enum MatchaMode: Int, CaseIterable {
     }
 }
 
-class CaffeinateManager {
-    static let shared = CaffeinateManager()
+class MatchaManager {
+    static let shared = MatchaManager()
 
     private var process: Process?
     private(set) var currentMode: MatchaMode = .off
@@ -245,8 +245,8 @@ extension Notification.Name {
 **Step 2: Commit**
 
 ```bash
-git add Matcha/Sources/CaffeinateManager.swift
-git commit -m "feat: implement CaffeinateManager for process control"
+git add Matcha/Sources/MatchaManager.swift
+git commit -m "feat: implement MatchaManager for process control"
 ```
 
 ---
@@ -509,7 +509,7 @@ class StatusBarController: NSObject {
     }
 
     @objc private func caffeineStateChanged() {
-        updateIcon(for: CaffeinateManager.shared.currentMode)
+        updateIcon(for: MatchaManager.shared.currentMode)
         updateStatus()
     }
 
@@ -530,7 +530,7 @@ class StatusBarController: NSObject {
     }
 
     private func updateStatus() {
-        let manager = CaffeinateManager.shared
+        let manager = MatchaManager.shared
         if manager.isRunning {
             let elapsed = Int(manager.elapsedTime)
             let hours = elapsed / 3600
@@ -552,13 +552,13 @@ class StatusBarController: NSObject {
 
         // Auto-stop check
         if !charging && batteryLevel <= PreferencesManager.shared.batteryThreshold && manager.isRunning {
-            CaffeinateManager.shared.stop()
+            MatchaManager.shared.stop()
         }
     }
 
-    @objc private func selectAwake() { startCaffeinate(mode: .awake) }
-    @objc private func selectScreenOn() { startCaffeinate(mode: .screenOn) }
-    @objc private func selectExtreme() { startCaffeinate(mode: .extreme) }
+    @objc private func selectAwake() { startMatcha(mode: .awake) }
+    @objc private func selectScreenOn() { startMatcha(mode: .screenOn) }
+    @objc private func selectExtreme() { startMatcha(mode: .extreme) }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
         selectedTimerMinutes = sender.tag
@@ -579,15 +579,15 @@ class StatusBarController: NSObject {
     }
 
     @objc private func quit() {
-        CaffeinateManager.shared.stop()
+        MatchaManager.shared.stop()
         NSApplication.shared.terminate(nil)
     }
 
-    private func startCaffeinate(mode: MatchaMode) {
+    private func startMatcha(mode: MatchaMode) {
         if mode == .timed {
-            CaffeinateManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
+            MatchaManager.shared.start(mode: mode, timerSeconds: selectedTimerMinutes * 60)
         } else {
-            CaffeinateManager.shared.start(mode: mode)
+            MatchaManager.shared.start(mode: mode)
         }
         selectedMode = mode
     }

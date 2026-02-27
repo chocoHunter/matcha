@@ -68,7 +68,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        CaffeinateManager.shared.stop()
+        MatchaManager.shared.stop()
     }
 }
 ```
@@ -81,10 +81,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 ---
 
-## 任务 3: 实现 CaffeinateManager
+## 任务 3: 实现 MatchaManager
 
 **文件：**
-- 创建：`Matcha/Sources/CaffeinateManager.swift`
+- 创建：`Matcha/Sources/MatchaManager.swift`
 
 ### 核心功能
 
@@ -105,8 +105,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 ### 提交
 
 ```bash
-git add Matcha/Sources/CaffeinateManager.swift
-git commit -m "feat: implement CaffeinateManager for process control"
+git add Matcha/Sources/MatchaManager.swift
+git commit -m "feat: implement MatchaManager for process control"
 ```
 
 ---
