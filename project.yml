@@ -27,6 +27,7 @@ targets:
         buildPhase: resources
         excludes:
           - "**/.DS_Store"
+          - "Matcha.iconset/**"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.matcha.Matcha

@@ -77,6 +77,11 @@ class MatchaManager {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
         task.arguments = mode.arguments(timerSeconds: timerSeconds)
+        task.terminationHandler = { [weak self] process in
+            DispatchQueue.main.async {
+                self?.handleProcessTermination(process)
+            }
+        }
 
         do {
             try task.run()
@@ -98,6 +103,7 @@ class MatchaManager {
         // Note: Battery sleep settings are only restored when user disables the battery mode or quits app
         // Not restored here to avoid frequent password prompts
 
+        process?.terminationHandler = nil
         process?.terminate()
         process = nil
         currentMode = .off
@@ -146,6 +152,20 @@ class MatchaManager {
                 }
             }
         }
+    }
+
+    private func handleProcessTermination(_ terminatedProcess: Process) {
+        guard process === terminatedProcess else { return }
+
+        if let start = startTime {
+            HistoryManager.shared.addUsage(seconds: Int(Date().timeIntervalSince(start)))
+        }
+
+        process = nil
+        currentMode = .off
+        startTime = nil
+        timerDuration = nil
+        NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
     }
 }
 

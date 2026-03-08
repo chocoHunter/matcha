@@ -164,6 +164,7 @@ class StatusBarController: NSObject {
     @objc private func matchaStateChanged() {
         updateIcon(for: MatchaManager.shared.currentMode)
         updateStatus()
+        updateModeCheckmarks(selected: MatchaManager.shared.currentMode)
         // Enable/disable stop button based on running state
         stopMenuItem.isEnabled = MatchaManager.shared.isRunning
     }
@@ -221,9 +222,19 @@ class StatusBarController: NSObject {
     }
 
     private func updateBatteryDisplay(level: Int? = nil, isCharging: Bool? = nil) {
-        let info = PowerManager.shared.getBatteryInfo()
-        let batteryLevel = level ?? info?.level ?? 0
-        let charging = isCharging ?? info?.isCharging ?? false
+        let batteryLevel: Int
+        let charging: Bool
+
+        if let level, let isCharging {
+            batteryLevel = level
+            charging = isCharging
+        } else if let info = PowerManager.shared.getBatteryInfo() {
+            batteryLevel = info.level
+            charging = info.isCharging
+        } else {
+            batteryMenuItem.title = "电池: --%"
+            return
+        }
 
         let icon = charging ? "🔌" : "🔋"
         batteryMenuItem.title = "电池: \(batteryLevel)% \(icon)"
@@ -238,7 +249,7 @@ class StatusBarController: NSObject {
     @objc private func selectAwake() {
         // Disable battery mode if enabled
         if PreferencesManager.shared.batterySleepEnabled {
-            PreferencesManager.shared.batterySleepEnabled = false
+            disableBatterySleepMode()
         }
         startMatcha(mode: .awake)
     }
@@ -246,14 +257,16 @@ class StatusBarController: NSObject {
     @objc private func selectScreenOn() {
         // Disable battery mode if enabled
         if PreferencesManager.shared.batterySleepEnabled {
-            PreferencesManager.shared.batterySleepEnabled = false
+            disableBatterySleepMode()
         }
         startMatcha(mode: .screenOn)
     }
 
     @objc private func selectExtreme() {
         // Disable battery mode for AC power mode
-        PreferencesManager.shared.batterySleepEnabled = false
+        if PreferencesManager.shared.batterySleepEnabled {
+            disableBatterySleepMode()
+        }
         // Clear all and check extreme
         clearAllCheckmarks()
         extremeMenuItem?.state = .on
@@ -261,6 +274,9 @@ class StatusBarController: NSObject {
         selectedMode = .extreme
     }
     @objc private func stopMatcha() {
+        if PreferencesManager.shared.batterySleepEnabled {
+            disableBatterySleepMode()
+        }
         MatchaManager.shared.stop()
         // Clear all checkmarks and check "恢复休眠"
         stopMenuItem?.state = .on
@@ -333,8 +349,17 @@ class StatusBarController: NSObject {
 
     @objc private func toggleLaunchAtLogin(_ sender: NSMenuItem) {
         let newState = sender.state == .off
-        sender.state = newState ? .on : .off
-        PreferencesManager.shared.launchAtLogin = newState
+        if PreferencesManager.shared.setLaunchAtLogin(newState) {
+            sender.state = newState ? .on : .off
+        } else {
+            sender.state = PreferencesManager.shared.launchAtLogin ? .on : .off
+            let alert = NSAlert()
+            alert.messageText = "开机自启设置失败"
+            alert.informativeText = "请检查系统登录项权限后重试。"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "确定")
+            alert.runModal()
+        }
     }
 
     @objc private func toggleBatterySleep(_ sender: NSMenuItem) {
@@ -342,9 +367,8 @@ class StatusBarController: NSObject {
 
         if currentlyEnabled {
             // Disable battery mode
-            PreferencesManager.shared.batterySleepEnabled = false
+            disableBatterySleepMode()
             sender.state = .off
-            // Note: Not restoring to avoid password prompt. System auto-restores on reboot.
         } else {
             // Enable - need to request admin privileges
             MatchaManager.shared.enableBatterySleep { [weak self] success, error in
@@ -379,8 +403,9 @@ class StatusBarController: NSObject {
     }
 
     @objc private func quit() {
-        // Note: Not restoring battery sleep settings to avoid password prompt
-        // System will auto-reset on reboot
+        if PreferencesManager.shared.batterySleepEnabled {
+            disableBatterySleepMode()
+        }
         MatchaManager.shared.stop()
         NSApplication.shared.terminate(nil)
     }
@@ -426,6 +451,11 @@ class StatusBarController: NSObject {
         case .off:
             stopMenuItem?.state = .on
         }
+    }
+
+    private func disableBatterySleepMode() {
+        PreferencesManager.shared.batterySleepEnabled = false
+        MatchaManager.shared.restoreBatterySleep()
     }
 
     deinit {

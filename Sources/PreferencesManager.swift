@@ -22,10 +22,6 @@ class PreferencesManager {
 
     var launchAtLogin: Bool {
         get { defaults.bool(forKey: Keys.launchAtLogin) }
-        set {
-            defaults.set(newValue, forKey: Keys.launchAtLogin)
-            updateLaunchAtLogin()
-        }
     }
 
     var lastMode: Int {
@@ -42,21 +38,29 @@ class PreferencesManager {
     private init() {
         // Apply launch at login on init
         if launchAtLogin {
-            updateLaunchAtLogin()
+            if !setLaunchAtLogin(true) {
+                defaults.set(false, forKey: Keys.launchAtLogin)
+            }
         }
     }
 
-    private func updateLaunchAtLogin() {
+    @discardableResult
+    func setLaunchAtLogin(_ enabled: Bool) -> Bool {
         if #available(macOS 13.0, *) {
             do {
-                if launchAtLogin {
+                if enabled {
                     try SMAppService.mainApp.register()
                 } else {
                     try SMAppService.mainApp.unregister()
                 }
+                defaults.set(enabled, forKey: Keys.launchAtLogin)
+                return true
             } catch {
                 print("Failed to update launch at login: \(error)")
+                return false
             }
         }
+        defaults.set(enabled, forKey: Keys.launchAtLogin)
+        return true
     }
 }
