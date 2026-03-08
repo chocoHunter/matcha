@@ -9,6 +9,10 @@ class StatusBarController: NSObject {
     private var stopMenuItem: NSMenuItem!
     private var timerMenuItem: NSMenuItem!
     private var thresholdMenuItem: NSMenuItem!
+    private var batterySleepMenuItem: NSMenuItem!
+    private var awakeMenuItem: NSMenuItem!
+    private var screenOnMenuItem: NSMenuItem!
+    private var extremeMenuItem: NSMenuItem!
     private var timer: Timer?
 
     private var selectedMode: MatchaMode = .off
@@ -47,24 +51,29 @@ class StatusBarController: NSObject {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Mode selection
-        let awakeItem = NSMenuItem(title: "阻止睡眠", action: #selector(selectAwake), keyEquivalent: "")
-        awakeItem.target = self
-        menu.addItem(awakeItem)
-
-        let screenOnItem = NSMenuItem(title: "屏幕常亮", action: #selector(selectScreenOn), keyEquivalent: "")
-        screenOnItem.target = self
-        menu.addItem(screenOnItem)
-
-        let extremeItem = NSMenuItem(title: "合盖不睡", action: #selector(selectExtreme), keyEquivalent: "")
-        extremeItem.target = self
-        menu.addItem(extremeItem)
-
-        // Stop button - disabled when not running
-        stopMenuItem = NSMenuItem(title: "恢复", action: #selector(stopMatcha), keyEquivalent: "")
+        // Stop button - default state with checkmark
+        stopMenuItem = NSMenuItem(title: "恢复休眠", action: #selector(stopMatcha), keyEquivalent: "")
         stopMenuItem.target = self
-        stopMenuItem.isEnabled = false
+        stopMenuItem.state = .on  // Default checked
         menu.addItem(stopMenuItem)
+
+        // Mode selection
+        awakeMenuItem = NSMenuItem(title: "阻止睡眠", action: #selector(selectAwake), keyEquivalent: "")
+        awakeMenuItem.target = self
+        menu.addItem(awakeMenuItem)
+
+        screenOnMenuItem = NSMenuItem(title: "屏幕常亮", action: #selector(selectScreenOn), keyEquivalent: "")
+        screenOnMenuItem.target = self
+        menu.addItem(screenOnMenuItem)
+
+        extremeMenuItem = NSMenuItem(title: "合盖不睡（插电）", action: #selector(selectExtreme), keyEquivalent: "")
+        extremeMenuItem.target = self
+        menu.addItem(extremeMenuItem)
+
+        // Battery sleep mode toggle (shown next to lid closed option)
+        batterySleepMenuItem = NSMenuItem(title: "合盖不睡（电池）", action: #selector(toggleBatterySleep), keyEquivalent: "")
+        batterySleepMenuItem.target = self
+        menu.addItem(batterySleepMenuItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -190,7 +199,15 @@ class StatusBarController: NSObject {
                 timeString += " [剩余: \(remainingString)]"
             }
 
-            statusMenuItem.title = "状态: \(manager.currentMode.displayName) (\(timeString))"
+            // Show power source info for lid closed mode
+            var powerInfo = ""
+            if manager.currentMode == .extreme {
+                // Show based on user's setting, not actual power state
+                let isBatteryMode = PreferencesManager.shared.batterySleepEnabled
+                powerInfo = isBatteryMode ? "【电池】" : "【插电】"
+            }
+
+            statusMenuItem.title = "状态: \(manager.currentMode.displayName)\(powerInfo) (\(timeString))"
         } else {
             statusMenuItem.title = "状态: 关闭"
             // Update history when stopped
@@ -218,10 +235,40 @@ class StatusBarController: NSObject {
         }
     }
 
-    @objc private func selectAwake() { startMatcha(mode: .awake) }
-    @objc private func selectScreenOn() { startMatcha(mode: .screenOn) }
-    @objc private func selectExtreme() { startMatcha(mode: .extreme) }
-    @objc private func stopMatcha() { MatchaManager.shared.stop() }
+    @objc private func selectAwake() {
+        // Disable battery mode if enabled
+        if PreferencesManager.shared.batterySleepEnabled {
+            PreferencesManager.shared.batterySleepEnabled = false
+        }
+        startMatcha(mode: .awake)
+    }
+
+    @objc private func selectScreenOn() {
+        // Disable battery mode if enabled
+        if PreferencesManager.shared.batterySleepEnabled {
+            PreferencesManager.shared.batterySleepEnabled = false
+        }
+        startMatcha(mode: .screenOn)
+    }
+
+    @objc private func selectExtreme() {
+        // Disable battery mode for AC power mode
+        PreferencesManager.shared.batterySleepEnabled = false
+        // Clear all and check extreme
+        clearAllCheckmarks()
+        extremeMenuItem?.state = .on
+        MatchaManager.shared.start(mode: .extreme)
+        selectedMode = .extreme
+    }
+    @objc private func stopMatcha() {
+        MatchaManager.shared.stop()
+        // Clear all checkmarks and check "恢复休眠"
+        stopMenuItem?.state = .on
+        awakeMenuItem?.state = .off
+        screenOnMenuItem?.state = .off
+        extremeMenuItem?.state = .off
+        batterySleepMenuItem?.state = .off
+    }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
         selectedTimerMinutes = sender.tag
@@ -290,12 +337,58 @@ class StatusBarController: NSObject {
         PreferencesManager.shared.launchAtLogin = newState
     }
 
+    @objc private func toggleBatterySleep(_ sender: NSMenuItem) {
+        let currentlyEnabled = PreferencesManager.shared.batterySleepEnabled
+
+        if currentlyEnabled {
+            // Disable battery mode
+            PreferencesManager.shared.batterySleepEnabled = false
+            sender.state = .off
+            // Note: Not restoring to avoid password prompt. System auto-restores on reboot.
+        } else {
+            // Enable - need to request admin privileges
+            MatchaManager.shared.enableBatterySleep { [weak self] success, error in
+                DispatchQueue.main.async {
+                    if success {
+                        PreferencesManager.shared.batterySleepEnabled = true
+                        // Start extreme mode with battery enabled
+                        self?.clearAllCheckmarks()
+                        sender.state = .on
+                        MatchaManager.shared.start(mode: .extreme)
+                        self?.selectedMode = .extreme
+                    } else {
+                        // Show error alert
+                        let alert = NSAlert()
+                        alert.messageText = "启用失败"
+                        alert.informativeText = error ?? "无法获取管理员权限"
+                        alert.alertStyle = .warning
+                        alert.addButton(withTitle: "确定")
+                        alert.runModal()
+                    }
+                }
+            }
+        }
+    }
+
+    private func clearAllCheckmarks() {
+        stopMenuItem?.state = .off
+        awakeMenuItem?.state = .off
+        screenOnMenuItem?.state = .off
+        extremeMenuItem?.state = .off
+        batterySleepMenuItem?.state = .off
+    }
+
     @objc private func quit() {
+        // Note: Not restoring battery sleep settings to avoid password prompt
+        // System will auto-reset on reboot
         MatchaManager.shared.stop()
         NSApplication.shared.terminate(nil)
     }
 
     private func startMatcha(mode: MatchaMode) {
+        // Update checkmarks for mode selection
+        updateModeCheckmarks(selected: mode)
+
         // If timer is 0 (permanent), use awake mode instead
         if mode == .timed && selectedTimerMinutes == 0 {
             MatchaManager.shared.start(mode: .awake)
@@ -305,6 +398,34 @@ class StatusBarController: NSObject {
             MatchaManager.shared.start(mode: mode)
         }
         selectedMode = mode
+    }
+
+    private func updateModeCheckmarks(selected: MatchaMode) {
+        // Clear all first
+        stopMenuItem?.state = .off
+        awakeMenuItem?.state = .off
+        screenOnMenuItem?.state = .off
+        extremeMenuItem?.state = .off
+        batterySleepMenuItem?.state = .off
+
+        // Then check the selected mode
+        switch selected {
+        case .awake:
+            awakeMenuItem?.state = .on
+        case .screenOn:
+            screenOnMenuItem?.state = .on
+        case .extreme:
+            // Check based on battery mode setting
+            if PreferencesManager.shared.batterySleepEnabled {
+                batterySleepMenuItem?.state = .on
+            } else {
+                extremeMenuItem?.state = .on
+            }
+        case .timed:
+            awakeMenuItem?.state = .on
+        case .off:
+            stopMenuItem?.state = .on
+        }
     }
 
     deinit {

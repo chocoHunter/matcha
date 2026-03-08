@@ -95,12 +95,57 @@ class MatchaManager {
             HistoryManager.shared.addUsage(seconds: Int(Date().timeIntervalSince(start)))
         }
 
+        // Note: Battery sleep settings are only restored when user disables the battery mode or quits app
+        // Not restored here to avoid frequent password prompts
+
         process?.terminate()
         process = nil
         currentMode = .off
         startTime = nil
         timerDuration = nil
         NotificationCenter.default.post(name: .matchaStateChanged, object: nil)
+    }
+
+    /// Enable battery sleep mode (allow lid closed on battery)
+    /// Requires admin privileges, will prompt user
+    func enableBatterySleep(completion: @escaping (Bool, String?) -> Void) {
+        let script = """
+        do shell script "pmset -b sleep 0; pmset -b disablesleep 1" with administrator privileges
+        """
+
+        runAppleScript(script) { success, error in
+            completion(success, error)
+        }
+    }
+
+    /// Restore battery sleep settings to default
+    func restoreBatterySleep() {
+        let script = """
+        do shell script "pmset -b sleep 5; pmset -b disablesleep 0" with administrator privileges
+        """
+
+        runAppleScript(script) { success, error in
+            if !success {
+                print("Failed to restore battery sleep: \(error ?? "unknown error")")
+            }
+        }
+    }
+
+    private func runAppleScript(_ script: String, completion: @escaping (Bool, String?) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            var error: NSDictionary?
+            let appleScript = NSAppleScript(source: script)
+            appleScript?.executeAndReturnError(&error)
+
+            DispatchQueue.main.async {
+                if let error = error {
+                    let message = error[NSAppleScript.errorMessage] as? String ?? "Unknown error"
+                    completion(false, message)
+                } else {
+                    completion(true, nil)
+                }
+            }
+        }
     }
 }
 

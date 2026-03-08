@@ -10,6 +10,7 @@ class PreferencesManager {
         static let batteryThreshold = "batteryThreshold"
         static let launchAtLogin = "launchAtLogin"
         static let lastMode = "lastMode"
+        static let batterySleepEnabled = "batterySleepEnabled"
     }
 
     var batteryThreshold: Int {
@@ -30,6 +31,12 @@ class PreferencesManager {
     var lastMode: Int {
         get { defaults.integer(forKey: Keys.lastMode) }
         set { defaults.set(newValue, forKey: Keys.lastMode) }
+    }
+
+    /// Whether to allow lid closed mode on battery power
+    var batterySleepEnabled: Bool {
+        get { defaults.bool(forKey: Keys.batterySleepEnabled) }
+        set { defaults.set(newValue, forKey: Keys.batterySleepEnabled) }
     }
 
     private init() {
