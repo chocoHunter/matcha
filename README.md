@@ -2,6 +2,12 @@
 
 A macOS menu bar app for preventing sleep, with practical lid-closed modes for MacBook users.
 
+**Language:** **English** | [简体中文](README-CN.md)
+
+<p>
+  <img src="Resources/matcha.png" alt="Matcha app icon" width="88">
+</p>
+
 ## Features
 
 - Multiple sleep prevention modes: Prevent Sleep, Screen On, Lid Closed (AC/Battery), Timed
@@ -13,12 +19,14 @@ A macOS menu bar app for preventing sleep, with practical lid-closed modes for M
 
 ## Install
 
-### Option 1: Download release (recommended)
+### Option 1: Download release (unsigned community build)
 
 1. Open [Releases](https://github.com/chocoHunter/matcha/releases).
 2. Download the latest `Matcha.dmg`.
 3. Drag `Matcha.app` into `/Applications`.
-4. Launch Matcha and grant permissions when prompted.
+4. If macOS blocks launch because the app is from an unidentified developer, open:
+   - `System Settings` -> `Privacy & Security` -> `Open Anyway` for Matcha
+5. Launch Matcha and grant permissions when prompted.
 
 ### Option 2: Build from source
 
@@ -31,7 +39,7 @@ Use the build steps in `How to Build` below.
 3. Use **Resume Sleep** to return to normal anytime.
 4. If behavior looks abnormal, click **Repair Sleep Settings** first.
 
-![Lid Closed AC](docs/assets/screenshots/mode-lid-ac.png)
+<img src="docs/assets/screenshots/mode-lid-ac.png" alt="Lid Closed AC menu example" width="320">
 
 ## Mode Differences
 

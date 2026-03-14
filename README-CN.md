@@ -2,6 +2,12 @@
 
 一款 macOS 菜单栏防休眠工具，面向 MacBook 合盖运行和高负载场景（如 AI 编码、长任务执行）。
 
+**语言版本：** [English](README.md) | **简体中文**
+
+<p>
+  <img src="Resources/matcha.png" alt="Matcha 应用图标" width="88">
+</p>
+
 ## 功能特点
 
 - 多种防休眠模式：阻止睡眠、屏幕常亮、合盖不睡（插电/电池）、定时模式
@@ -13,12 +19,14 @@
 
 ## 安装方式
 
-### 方式一：下载发布包（推荐）
+### 方式一：下载发布包（未签名社区版本）
 
 1. 打开 [Releases](https://github.com/chocoHunter/matcha/releases)。
 2. 下载最新 `Matcha.dmg`。
 3. 将 `Matcha.app` 拖到 `/Applications`。
-4. 首次启动时按提示授权。
+4. 若 macOS 提示“无法验证开发者”，可到：
+   - `系统设置` -> `隐私与安全性` -> 对 Matcha 点击 `仍要打开`
+5. 首次启动时按提示授权。
 
 ### 方式二：本地源码构建
 
@@ -31,7 +39,7 @@
 3. 随时点击 **恢复休眠** 可回到默认状态。
 4. 出现异常时优先点击 **修复休眠设置**。
 
-![合盖不睡插电](docs/assets/screenshots/mode-lid-ac.png)
+<img src="docs/assets/screenshots/mode-lid-ac.png" alt="合盖不睡（插电）菜单示意图" width="320">
 
 ## 模式区别
 

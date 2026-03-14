@@ -2,6 +2,19 @@
 
 This document describes the recommended release workflow for Matcha.
 
+## Distribution Modes
+
+### A) No-cost community distribution (unsigned)
+
+- You can publish `Matcha.dmg` without Apple Developer membership.
+- Users may see Gatekeeper warnings and need to click `Open Anyway` in `Privacy & Security`.
+- Use this mode for early community testing and open-source adoption.
+
+### B) Trusted public distribution (signed + notarized)
+
+- Requires Apple Developer Program membership.
+- Recommended when targeting non-technical users.
+
 ## Prerequisites
 
 - Full Xcode selected via `xcode-select -p`
