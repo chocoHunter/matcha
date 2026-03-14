@@ -11,6 +11,19 @@ A macOS menu bar app for preventing sleep, with practical lid-closed modes for M
 - Flexible timer (15 min to 24 hours, or permanent)
 - Launch at login
 
+## Install
+
+### Option 1: Download release (recommended)
+
+1. Open [Releases](https://github.com/chocoHunter/matcha/releases).
+2. Download the latest `Matcha.dmg`.
+3. Drag `Matcha.app` into `/Applications`.
+4. Launch Matcha and grant permissions when prompted.
+
+### Option 2: Build from source
+
+Use the build steps in `How to Build` below.
+
 ## Usage
 
 1. Click the Matcha menu bar icon.
@@ -80,6 +93,7 @@ sudo pmset restoredefaults
 ## Project Docs
 
 - `CONTRIBUTING.md`: contributor workflow and testing expectations
+- `CODE_OF_CONDUCT.md`: community standards and enforcement rules
 - `SECURITY.md`: vulnerability reporting guidance
 - `CHANGELOG.md`: notable project changes
 - `docs/release.md`: release checklist, signing, and notarization workflow

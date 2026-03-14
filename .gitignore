@@ -5,7 +5,6 @@ Build/
 *.xcworkspace/
 *.xcodeproj
 *.xcworkspace
-Matcha.entitlements
 Sources/Matcha
 *.app/
 *.dmg

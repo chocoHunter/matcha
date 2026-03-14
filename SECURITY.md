@@ -8,7 +8,11 @@ Matcha is currently maintained on the latest `main` branch.
 
 Please do not open a public GitHub issue for security-sensitive reports.
 
-Instead, report vulnerabilities privately to the maintainer through GitHub security reporting if available, or by direct maintainer contact before public disclosure.
+Please report vulnerabilities through GitHub Private Vulnerability Reporting:
+
+- https://github.com/chocoHunter/matcha/security/advisories/new
+
+If that page is unavailable for any reason, open an issue titled `SECURITY: private contact request` without technical details, and we will move to a private channel.
 
 When reporting, please include:
 

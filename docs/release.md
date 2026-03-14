@@ -1,89 +1,104 @@
 # Release Guide
 
-This document describes the current release workflow for Matcha.
+This document describes the recommended release workflow for Matcha.
 
 ## Prerequisites
 
-- Full Xcode installation selected via `xcode-select`
-- XcodeGen
-- appdmg
-- Access to Apple signing credentials if you plan to distribute binaries publicly
+- Full Xcode selected via `xcode-select -p`
+- `xcodegen`
+- `appdmg`
+- Apple Developer account (for public binary distribution)
+- `xcrun notarytool` configured with an app-specific password or API key
 
-## 1. Prepare the Release
+## 1. Prepare
 
-- Confirm `README.md`, `README-CN.md`, and `CHANGELOG.md` are up to date
-- Run tests
-- Validate the target version number in `project.yml`
-- Confirm no unintended local files are included
+- Update `CHANGELOG.md`
+- Confirm version in `project.yml` (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`)
+- Run tests and validate no unintended files are staged
 
-## 2. Build and Validate Artifacts
+```bash
+xcodegen generate
+/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project Matcha.xcodeproj -scheme MatchaTests -sdk macosx test -destination 'platform=macOS'
+```
 
-Run:
+## 2. Build Artifacts
 
 ```bash
 ./scripts/build-release-artifacts.sh
 ```
-
-This currently:
-
-- Generates the Xcode project
-- Builds the Release app
-- Verifies the app bundle with `codesign --verify`
-- Creates `Build/Matcha.dmg`
-- Mounts the DMG and confirms `Matcha.app` is present
 
 Artifacts:
 
 - App: `Build/DerivedData/Build/Products/Release/Matcha.app`
 - DMG: `Build/Matcha.dmg`
 
-## 3. Run Manual Checks
+## 3. Sign for Distribution
 
-Recommended checks before publishing:
+Set your signing identities first:
 
-- Launch the built app
-- Verify each mode can be enabled and stopped
-- Verify battery mode recovery paths
-- Verify lid-close display sleep behavior in battery mode
-- Re-open the lid and confirm normal recovery
-- Test the **Repair Sleep Settings** flow
+```bash
+export APP_SIGN_IDENTITY="Developer ID Application: YOUR NAME (TEAMID)"
+export INSTALL_SIGN_IDENTITY="Developer ID Application: YOUR NAME (TEAMID)"
+```
 
-## 4. Sign and Notarize for Public Binary Distribution
+Sign the app bundle:
 
-The current local build script creates development-signed artifacts suitable for local testing.
+```bash
+codesign --force --deep --options runtime --timestamp \
+  --sign "$APP_SIGN_IDENTITY" \
+  Build/DerivedData/Build/Products/Release/Matcha.app
+```
 
-Before distributing binaries publicly, complete these steps with your Apple Developer credentials:
+Optionally sign the DMG:
 
-- Sign the app with a Developer ID Application certificate
-- Sign the DMG with a Developer ID Installer or preferred distribution approach
-- Submit the app or DMG for notarization
-- Staple the notarization ticket
-- Re-run validation with `spctl`
+```bash
+codesign --force --timestamp --sign "$INSTALL_SIGN_IDENTITY" Build/Matcha.dmg
+```
 
-Suggested final checks:
+## 4. Notarize and Staple
+
+Submit for notarization (example with keychain profile):
+
+```bash
+xcrun notarytool submit Build/Matcha.dmg \
+  --keychain-profile "AC_PROFILE" \
+  --wait
+```
+
+Staple ticket:
+
+```bash
+xcrun stapler staple Build/Matcha.dmg
+xcrun stapler staple Build/DerivedData/Build/Products/Release/Matcha.app
+```
+
+## 5. Verify
 
 ```bash
 codesign --verify --deep --strict Build/DerivedData/Build/Products/Release/Matcha.app
 spctl -a -vv Build/DerivedData/Build/Products/Release/Matcha.app
 spctl -a -vv -t open Build/Matcha.dmg
+shasum -a 256 Build/Matcha.dmg
 ```
 
-## 5. Publish the Release
+Record the SHA256 in release notes so users can verify downloads.
 
-- Tag the release in git
-- Push the tag
-- Create a GitHub release
-- Attach the notarized DMG
-- Paste the relevant `CHANGELOG.md` notes into the release description
+## 6. Publish
+
+- Create and push tag (for example: `v1.0.2`)
+- Create GitHub release
+- Upload notarized `Matcha.dmg`
+- Paste changelog section + SHA256 into release notes
 
 ## Release Checklist
 
-- [ ] Tests passed
-- [ ] Release artifacts built
-- [ ] Manual battery-mode checks completed
-- [ ] App signed for distribution
-- [ ] Notarization completed
-- [ ] `spctl` checks passed
 - [ ] Changelog updated
-- [ ] Git tag created
-- [ ] GitHub release published
+- [ ] Version updated in `project.yml`
+- [ ] Tests passed
+- [ ] Artifacts built
+- [ ] App signed
+- [ ] Notarization completed
+- [ ] Stapling completed
+- [ ] `spctl` checks passed
+- [ ] SHA256 generated and published
+- [ ] Tag pushed and GitHub release published

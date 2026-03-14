@@ -9,6 +9,9 @@
 - [x] 明确危险能力说明：在 README/README-CN 加入“会修改系统电源策略（pmset）”的风险提示和恢复说明
 - [x] 清理发布流程中的本地产物策略：确认 `Build/`、`*.dmg`、`Matcha.xcodeproj` 是否应提交；若不提交，完善 `.gitignore`（当前仅忽略 `build/`，未覆盖 `Build/`）
 - [x] 增加最小可验证构建说明（本机若未安装完整 Xcode，会导致 `xcodebuild` 不可用）
+- [x] 对齐版本与发布记录（`project.yml`、`Info.plist`、`CHANGELOG.md`）
+- [ ] 仓库切换为 Public，并补充仓库描述与 Topics
+- [ ] 完成 Developer ID 签名、公证、staple 与 `spctl` 校验后再发布二进制
 
 ## P1 - 建议在首次开源后尽快补齐
 
@@ -18,6 +21,7 @@
 - [x] 增加 `SECURITY.md`（漏洞报告渠道、处理 SLA）
 - [x] 增加 Issue / PR Template，减少社区沟通成本
 - [x] 增加发布文档：签名、公证、DMG 产物生成与校验步骤
+- [x] 增加 `CODE_OF_CONDUCT.md`，补齐社区协作规范
 
 ## P2 - 体验与可维护性优化
 

@@ -11,6 +11,19 @@
 - 定时模式：15 分钟到 24 小时，或永久
 - 开机自启
 
+## 安装方式
+
+### 方式一：下载发布包（推荐）
+
+1. 打开 [Releases](https://github.com/chocoHunter/matcha/releases)。
+2. 下载最新 `Matcha.dmg`。
+3. 将 `Matcha.app` 拖到 `/Applications`。
+4. 首次启动时按提示授权。
+
+### 方式二：本地源码构建
+
+可直接使用文末 `如何构建` 章节。
+
 ## 使用方法
 
 1. 点击菜单栏 Matcha 图标。
@@ -80,6 +93,7 @@ sudo pmset restoredefaults
 ## 项目文档
 
 - `CONTRIBUTING.md`：贡献流程与测试要求
+- `CODE_OF_CONDUCT.md`：社区协作行为准则
 - `SECURITY.md`：安全漏洞反馈方式
 - `CHANGELOG.md`：项目重要变更记录
 - `docs/release.md`：发布检查、签名与公证流程
