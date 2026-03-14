@@ -10,6 +10,7 @@ class StatusBarController: NSObject {
     private var timerMenuItem: NSMenuItem!
     private var thresholdMenuItem: NSMenuItem!
     private var batterySleepMenuItem: NSMenuItem!
+    private var repairSleepMenuItem: NSMenuItem!
     private var awakeMenuItem: NSMenuItem!
     private var screenOnMenuItem: NSMenuItem!
     private var extremeMenuItem: NSMenuItem!
@@ -17,6 +18,8 @@ class StatusBarController: NSObject {
 
     private var selectedMode: MatchaMode = .off
     private var selectedTimerMinutes: Int = 0 // 0 means permanent
+    private var isPowerOperationInProgress = false
+    private var lastClamshellClosedState: Bool?
 
     override init() {
         super.init()
@@ -24,6 +27,7 @@ class StatusBarController: NSObject {
         setupMenu()
         startUpdateTimer()
         setupNotifications()
+        attemptStartupBatteryRecoveryIfNeeded()
         updateHistoryDisplay()
     }
 
@@ -55,6 +59,7 @@ class StatusBarController: NSObject {
         stopMenuItem = NSMenuItem(title: "恢复休眠", action: #selector(stopMatcha), keyEquivalent: "")
         stopMenuItem.target = self
         stopMenuItem.state = .on  // Default checked
+        stopMenuItem.isEnabled = false
         menu.addItem(stopMenuItem)
 
         // Mode selection
@@ -74,6 +79,10 @@ class StatusBarController: NSObject {
         batterySleepMenuItem = NSMenuItem(title: "合盖不睡（电池）", action: #selector(toggleBatterySleep), keyEquivalent: "")
         batterySleepMenuItem.target = self
         menu.addItem(batterySleepMenuItem)
+
+        repairSleepMenuItem = NSMenuItem(title: "修复休眠设置", action: #selector(repairSleepSettings), keyEquivalent: "")
+        repairSleepMenuItem.target = self
+        menu.addItem(repairSleepMenuItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -136,11 +145,13 @@ class StatusBarController: NSObject {
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+        updatePowerActionAvailability()
     }
 
     private func startUpdateTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.updateStatus()
+            self?.handleBatterySleepClamshellTransition()
         }
     }
 
@@ -149,6 +160,12 @@ class StatusBarController: NSObject {
             self,
             selector: #selector(matchaStateChanged),
             name: .matchaStateChanged,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(batterySleepRestoreFailed(_:)),
+            name: .batterySleepRestoreFailed,
             object: nil
         )
 
@@ -161,12 +178,16 @@ class StatusBarController: NSObject {
         updateBatteryDisplay()
     }
 
+    @objc private func batterySleepRestoreFailed(_ notification: Notification) {
+        let message = notification.object as? String
+        showBatterySleepRestoreFailedAlert(message)
+    }
+
     @objc private func matchaStateChanged() {
         updateIcon(for: MatchaManager.shared.currentMode)
         updateStatus()
         updateModeCheckmarks(selected: MatchaManager.shared.currentMode)
-        // Enable/disable stop button based on running state
-        stopMenuItem.isEnabled = MatchaManager.shared.isRunning
+        updatePowerActionAvailability()
     }
 
     private func updateIcon(for mode: MatchaMode) {
@@ -186,6 +207,11 @@ class StatusBarController: NSObject {
     }
 
     private func updateStatus() {
+        if isPowerOperationInProgress {
+            statusMenuItem.title = "状态: 正在切换..."
+            return
+        }
+
         let manager = MatchaManager.shared
         if manager.isRunning {
             let elapsed = Int(manager.elapsedTime)
@@ -241,49 +267,34 @@ class StatusBarController: NSObject {
 
         // Auto-stop check - only when threshold > 0 (enabled)
         let threshold = PreferencesManager.shared.batteryThreshold
-        if threshold > 0 && !charging && batteryLevel <= threshold && MatchaManager.shared.isRunning {
-            MatchaManager.shared.stop()
+        if threshold > 0 && !charging && batteryLevel <= threshold && MatchaManager.shared.isRunning && !isPowerOperationInProgress {
+            guard beginPowerOperation() else { return }
+            MatchaManager.shared.stop { [weak self] in
+                self?.endPowerOperation()
+            }
         }
     }
 
     @objc private func selectAwake() {
-        // Disable battery mode if enabled
-        if PreferencesManager.shared.batterySleepEnabled {
-            disableBatterySleepMode()
-        }
         startMatcha(mode: .awake)
     }
 
     @objc private func selectScreenOn() {
-        // Disable battery mode if enabled
-        if PreferencesManager.shared.batterySleepEnabled {
-            disableBatterySleepMode()
-        }
         startMatcha(mode: .screenOn)
     }
 
     @objc private func selectExtreme() {
-        // Disable battery mode for AC power mode
-        if PreferencesManager.shared.batterySleepEnabled {
-            disableBatterySleepMode()
-        }
-        // Clear all and check extreme
-        clearAllCheckmarks()
-        extremeMenuItem?.state = .on
-        MatchaManager.shared.start(mode: .extreme)
-        selectedMode = .extreme
+        startMatcha(mode: .extreme)
     }
+
     @objc private func stopMatcha() {
-        if PreferencesManager.shared.batterySleepEnabled {
-            disableBatterySleepMode()
+        guard beginPowerOperation() else { return }
+
+        MatchaManager.shared.stop { [weak self] in
+            self?.clearAllCheckmarks()
+            self?.stopMenuItem?.state = .on
+            self?.endPowerOperation()
         }
-        MatchaManager.shared.stop()
-        // Clear all checkmarks and check "恢复休眠"
-        stopMenuItem?.state = .on
-        awakeMenuItem?.state = .off
-        screenOnMenuItem?.state = .off
-        extremeMenuItem?.state = .off
-        batterySleepMenuItem?.state = .off
     }
 
     @objc private func selectTimer(_ sender: NSMenuItem) {
@@ -363,23 +374,29 @@ class StatusBarController: NSObject {
     }
 
     @objc private func toggleBatterySleep(_ sender: NSMenuItem) {
-        let currentlyEnabled = PreferencesManager.shared.batterySleepEnabled
+        guard beginPowerOperation() else { return }
+
+        let currentlyEnabled = isBatterySleepOverrideActive
 
         if currentlyEnabled {
             // Disable battery mode
-            disableBatterySleepMode()
-            sender.state = .off
+            disableBatterySleepMode { [weak self] success in
+                if success {
+                    self?.batterySleepMenuItem?.state = .off
+                }
+                self?.endPowerOperation()
+            }
         } else {
             // Enable - need to request admin privileges
             MatchaManager.shared.enableBatterySleep { [weak self] success, error in
                 DispatchQueue.main.async {
                     if success {
-                        PreferencesManager.shared.batterySleepEnabled = true
                         // Start extreme mode with battery enabled
                         self?.clearAllCheckmarks()
                         sender.state = .on
                         MatchaManager.shared.start(mode: .extreme)
                         self?.selectedMode = .extreme
+                        self?.endPowerOperation()
                     } else {
                         // Show error alert
                         let alert = NSAlert()
@@ -388,7 +405,27 @@ class StatusBarController: NSObject {
                         alert.alertStyle = .warning
                         alert.addButton(withTitle: "确定")
                         alert.runModal()
+                        self?.endPowerOperation()
                     }
+                }
+            }
+        }
+    }
+
+    @objc private func repairSleepSettings() {
+        guard beginPowerOperation() else { return }
+
+        // Stop current caffeinate session first, then force restore battery sleep policy.
+        MatchaManager.shared.stop(restoreBatteryOverride: false) { [weak self] in
+            MatchaManager.shared.restoreBatterySleep { success, error in
+                DispatchQueue.main.async {
+                    if success {
+                        self?.clearAllCheckmarks()
+                        self?.stopMenuItem?.state = .on
+                    } else {
+                        self?.showBatterySleepRestoreFailedAlert(error)
+                    }
+                    self?.endPowerOperation()
                 }
             }
         }
@@ -403,14 +440,31 @@ class StatusBarController: NSObject {
     }
 
     @objc private func quit() {
-        if PreferencesManager.shared.batterySleepEnabled {
-            disableBatterySleepMode()
+        MatchaManager.shared.stop {
+            NSApplication.shared.terminate(nil)
         }
-        MatchaManager.shared.stop()
-        NSApplication.shared.terminate(nil)
     }
 
     private func startMatcha(mode: MatchaMode) {
+        guard beginPowerOperation() else { return }
+
+        if isBatterySleepOverrideActive {
+            disableBatterySleepMode { [weak self] success in
+                guard success else {
+                    self?.endPowerOperation()
+                    return
+                }
+                self?.startMatchaInternal(mode: mode)
+                self?.endPowerOperation()
+            }
+            return
+        }
+
+        startMatchaInternal(mode: mode)
+        endPowerOperation()
+    }
+
+    private func startMatchaInternal(mode: MatchaMode) {
         // Update checkmarks for mode selection
         updateModeCheckmarks(selected: mode)
 
@@ -453,9 +507,94 @@ class StatusBarController: NSObject {
         }
     }
 
-    private func disableBatterySleepMode() {
-        PreferencesManager.shared.batterySleepEnabled = false
-        MatchaManager.shared.restoreBatterySleep()
+    private var isBatterySleepOverrideActive: Bool {
+        PreferencesManager.shared.batterySleepEnabled || PreferencesManager.shared.batterySleepOverrideActive
+    }
+
+    private var isBatterySleepModeRunning: Bool {
+        PreferencesManager.shared.batterySleepEnabled && MatchaManager.shared.currentMode == .extreme
+    }
+
+    private func disableBatterySleepMode(completion: ((Bool) -> Void)? = nil) {
+        MatchaManager.shared.restoreBatterySleep { [weak self] success, error in
+            if !success {
+                self?.showBatterySleepRestoreFailedAlert(error)
+            }
+            completion?(success)
+        }
+    }
+
+    private func attemptStartupBatteryRecoveryIfNeeded() {
+        guard PreferencesManager.shared.batterySleepOverrideActive else { return }
+        guard beginPowerOperation() else { return }
+
+        MatchaManager.shared.recoverBatterySleepIfNeeded { [weak self] success, error in
+            if !success {
+                self?.showBatterySleepRestoreFailedAlert(error)
+            }
+            self?.endPowerOperation()
+        }
+    }
+
+    private func beginPowerOperation() -> Bool {
+        guard !isPowerOperationInProgress else { return false }
+        isPowerOperationInProgress = true
+        updatePowerActionAvailability()
+        return true
+    }
+
+    private func endPowerOperation() {
+        isPowerOperationInProgress = false
+        updatePowerActionAvailability()
+    }
+
+    private func handleBatterySleepClamshellTransition() {
+        guard isBatterySleepModeRunning else {
+            lastClamshellClosedState = nil
+            return
+        }
+
+        guard let isClosed = PowerManager.shared.isClamshellClosed() else {
+            return
+        }
+
+        let action = BatterySleepDisplayPlanner.action(
+            previousIsClosed: lastClamshellClosedState,
+            currentIsClosed: isClosed,
+            batterySleepEnabled: PreferencesManager.shared.batterySleepEnabled,
+            mode: MatchaManager.shared.currentMode
+        )
+
+        lastClamshellClosedState = isClosed
+
+        if action == .sleepDisplay {
+            MatchaManager.shared.sleepDisplayNow()
+        }
+    }
+
+    private func updatePowerActionAvailability() {
+        let available = !isPowerOperationInProgress
+        awakeMenuItem?.isEnabled = available
+        screenOnMenuItem?.isEnabled = available
+        extremeMenuItem?.isEnabled = available
+        batterySleepMenuItem?.isEnabled = available
+        repairSleepMenuItem?.isEnabled = available
+        timerMenuItem?.isEnabled = available
+
+        stopMenuItem?.isEnabled = available && MatchaManager.shared.isRunning
+    }
+
+    private func showBatterySleepRestoreFailedAlert(_ error: String?) {
+        let alert = NSAlert()
+        alert.messageText = "恢复系统休眠设置失败"
+        alert.informativeText = """
+        请重试一次，或在终端执行：
+        sudo pmset -b disablesleep 0
+        详情：\(error ?? "未知错误")
+        """
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "确定")
+        alert.runModal()
     }
 
     deinit {

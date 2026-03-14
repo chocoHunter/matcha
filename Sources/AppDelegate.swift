@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        MatchaManager.shared.stop()
+        // Best effort cleanup without triggering extra privilege prompt during termination.
+        MatchaManager.shared.stop(restoreBatteryOverride: false)
     }
 }

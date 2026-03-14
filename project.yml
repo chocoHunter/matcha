@@ -38,3 +38,16 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     entitlements:
       path: Sources/Matcha.entitlements
+  MatchaTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/MatchaTests
+    dependencies:
+      - target: Matcha
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matcha.MatchaTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Matcha.app/Contents/MacOS/Matcha"
+        BUNDLE_LOADER: "$(TEST_HOST)"

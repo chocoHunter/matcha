@@ -1,4 +1,5 @@
 import Foundation
+import IOKit
 import IOKit.ps
 
 class PowerManager {
@@ -52,5 +53,22 @@ class PowerManager {
         let level = info[kIOPSCurrentCapacityKey as String] as? Int ?? 0
         let isCharging = (info[kIOPSIsChargingKey as String] as? Bool) ?? false
         return (level, isCharging)
+    }
+
+    func isClamshellClosed() -> Bool? {
+        let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
+        guard service != 0 else { return nil }
+        defer { IOObjectRelease(service) }
+
+        guard let value = IORegistryEntryCreateCFProperty(
+            service,
+            "AppleClamshellState" as CFString,
+            kCFAllocatorDefault,
+            0
+        )?.takeRetainedValue() as? Bool else {
+            return nil
+        }
+
+        return value
     }
 }

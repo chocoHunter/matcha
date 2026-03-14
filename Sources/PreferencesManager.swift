@@ -11,6 +11,9 @@ class PreferencesManager {
         static let launchAtLogin = "launchAtLogin"
         static let lastMode = "lastMode"
         static let batterySleepEnabled = "batterySleepEnabled"
+        static let batterySleepOverrideActive = "batterySleepOverrideActive"
+        static let batterySleepSnapshotSleep = "batterySleepSnapshotSleep"
+        static let batterySleepSnapshotDisablesleep = "batterySleepSnapshotDisablesleep"
     }
 
     var batteryThreshold: Int {
@@ -33,6 +36,37 @@ class PreferencesManager {
     var batterySleepEnabled: Bool {
         get { defaults.bool(forKey: Keys.batterySleepEnabled) }
         set { defaults.set(newValue, forKey: Keys.batterySleepEnabled) }
+    }
+
+    /// Whether this app currently has an active pmset override on battery profile
+    var batterySleepOverrideActive: Bool {
+        get { defaults.bool(forKey: Keys.batterySleepOverrideActive) }
+        set { defaults.set(newValue, forKey: Keys.batterySleepOverrideActive) }
+    }
+
+    /// Snapshot of user's original battery sleep settings before override
+    var batterySleepSnapshot: (sleep: Int, disablesleep: Int)? {
+        get {
+            guard defaults.object(forKey: Keys.batterySleepSnapshotSleep) != nil,
+                  defaults.object(forKey: Keys.batterySleepSnapshotDisablesleep) != nil else {
+                return nil
+            }
+
+            return (
+                sleep: defaults.integer(forKey: Keys.batterySleepSnapshotSleep),
+                disablesleep: defaults.integer(forKey: Keys.batterySleepSnapshotDisablesleep)
+            )
+        }
+        set {
+            guard let newValue else {
+                defaults.removeObject(forKey: Keys.batterySleepSnapshotSleep)
+                defaults.removeObject(forKey: Keys.batterySleepSnapshotDisablesleep)
+                return
+            }
+
+            defaults.set(newValue.sleep, forKey: Keys.batterySleepSnapshotSleep)
+            defaults.set(newValue.disablesleep, forKey: Keys.batterySleepSnapshotDisablesleep)
+        }
     }
 
     private init() {
