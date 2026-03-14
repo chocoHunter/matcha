@@ -5,7 +5,7 @@
 **语言版本：** [English](README.md) | **简体中文**
 
 <p>
-  <img src="Resources/matcha.png" alt="Matcha 应用图标" width="88">
+  <img src="docs/assets/icons/matcha-icon.png" alt="Matcha 应用图标" width="88">
 </p>
 
 ## 功能特点

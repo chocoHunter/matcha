@@ -5,7 +5,7 @@ A macOS menu bar app for preventing sleep, with practical lid-closed modes for M
 **Language:** **English** | [简体中文](README-CN.md)
 
 <p>
-  <img src="Resources/matcha.png" alt="Matcha app icon" width="88">
+  <img src="docs/assets/icons/matcha-icon.png" alt="Matcha app icon" width="88">
 </p>
 
 ## Features
